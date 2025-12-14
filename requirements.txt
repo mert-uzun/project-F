@@ -1,0 +1,46 @@
+# ====================================
+# Cross-Document Conflict Detector MVP
+# ====================================
+
+# === Core Framework ===
+llama-index>=0.10.0
+llama-index-core>=0.10.0
+
+# === Document Parsing (The Moat) ===
+llama-index-readers-file>=0.1.0
+llama-parse>=0.4.0                    # Premium table extraction
+unstructured[pdf]>=0.12.0             # Fallback parser
+pdf2image>=1.16.0                     # PDF rendering for OCR
+pytesseract>=0.3.10                   # OCR fallback
+
+# === Vector Store ===
+llama-index-vector-stores-chroma>=0.1.0
+chromadb>=0.4.0
+
+# === Knowledge Graph ===
+llama-index-graph-stores-networkx>=0.1.0
+networkx>=3.0
+pyvis>=0.3.0                          # Graph visualization
+
+# === LLM Backends (Privacy-First) ===
+llama-index-llms-ollama>=0.1.0        # Local LLM
+llama-index-llms-openai>=0.1.0        # Cloud fallback
+llama-index-embeddings-huggingface>=0.1.0  # Local embeddings (bge-large-en-v1.5)
+
+# === API Layer ===
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6               # File uploads
+
+# === Data Validation ===
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# === Utilities ===
+python-dotenv>=1.0.0
+rich>=13.0.0                          # Logging
+tenacity>=8.2.0                       # Retry logic
+
+# === Development ===
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
