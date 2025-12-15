@@ -5,7 +5,7 @@ Cross-Document Conflict Detector API.
 """
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -161,7 +161,6 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
     Uses the Comparator Agent to find contradictions,
     then the Judge Agent to verify and generate the report.
     """
-    from typing import Any
     from uuid import UUID
     
     from src.agents.comparator import ComparatorAgent
