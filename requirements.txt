@@ -44,3 +44,5 @@ tenacity>=8.2.0                       # Retry logic
 # === Development ===
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+pytest-cov>=4.0.0                     # Coverage reports
+httpx>=0.25.0                         # HTTP client for tests
