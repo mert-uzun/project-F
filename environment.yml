@@ -1,0 +1,69 @@
+# ====================================
+# Cross-Document Conflict Detector MVP
+# Mamba/Conda Environment
+# ====================================
+# Usage: mamba env create -f environment.yml
+#        mamba activate project-f
+
+name: project-f
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # === Python ===
+  - python=3.11
+  
+  # === Core Scientific ===
+  - numpy
+  - pandas
+  
+  # === API Layer ===
+  - fastapi>=0.109.0
+  - uvicorn>=0.27.0
+  - python-multipart>=0.0.6
+  
+  # === Data Validation ===
+  - pydantic>=2.0.0
+  - pydantic-settings>=2.0.0
+  
+  # === Utilities ===
+  - python-dotenv>=1.0.0
+  - rich>=13.0.0
+  - tenacity>=8.2.0
+  - networkx>=3.0
+  - httpx>=0.25.0
+  
+  # === Development ===
+  - pytest>=8.0.0
+  - pytest-asyncio>=0.23.0
+  - pytest-cov>=4.0.0
+  
+  # === PDF Processing (System Deps) ===
+  - poppler
+  - tesseract
+  
+  # === Packages not on conda-forge (use pip) ===
+  - pip
+  - pip:
+    # LlamaIndex ecosystem (not on conda-forge)
+    - llama-index>=0.10.0
+    - llama-index-core>=0.10.0
+    - llama-index-readers-file>=0.1.0
+    - llama-parse>=0.4.0
+    - llama-index-vector-stores-chroma>=0.1.0
+    - llama-index-graph-stores-networkx>=0.1.0
+    - llama-index-llms-ollama>=0.1.0
+    - llama-index-llms-openai>=0.1.0
+    - llama-index-embeddings-huggingface>=0.1.0
+    
+    # Document parsing
+    - unstructured[pdf]>=0.12.0
+    - pdf2image>=1.16.0
+    - pytesseract>=0.3.10
+    
+    # Vector store
+    - chromadb>=0.4.0
+    
+    # Graph visualization
+    - pyvis>=0.3.0
