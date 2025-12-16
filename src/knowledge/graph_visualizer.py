@@ -45,10 +45,10 @@ class _Severity(str, Enum):
 # Severity-based colors (RAG system - Red/Amber/Green)
 # These draw immediate attention in order of priority
 SEVERITY_COLORS = {
-    ConflictSeverity.CRITICAL: "#DC2626",  # Vivid red - STOP, urgent
-    ConflictSeverity.HIGH: "#EA580C",      # Deep orange - serious warning
-    ConflictSeverity.MEDIUM: "#CA8A04",    # Amber/gold - notable, review
-    ConflictSeverity.LOW: "#65A30D",       # Olive green - minor, low priority
+    _Severity.CRITICAL: "#DC2626",  # Vivid red - STOP, urgent
+    _Severity.HIGH: "#EA580C",      # Deep orange - serious warning
+    _Severity.MEDIUM: "#CA8A04",    # Amber/gold - notable, review
+    _Severity.LOW: "#65A30D",       # Olive green - minor, low priority
 }
 
 # Entity type colors - Professional, high contrast
