@@ -76,15 +76,15 @@ RELATIONSHIP_COLORS = {
     RelationshipType.HAS_EQUITY: "#B45309",
     RelationshipType.OWNS: "#B45309",
     
-    # Organizational - Blue (hierarchy)
-    RelationshipType.WORKS_FOR: "#0284C7",
+    # Organizational - Blue (hierarchy)  
+    RelationshipType.EMPLOYED_BY: "#0284C7",
     RelationshipType.REPORTS_TO: "#0284C7",
     RelationshipType.HAS_ROLE: "#0284C7",
     
     # References - Light gray (supporting)
     RelationshipType.REFERENCES: "#94A3B8",
-    RelationshipType.DEFINES: "#94A3B8",
-    RelationshipType.AMENDS: "#94A3B8",
+    RelationshipType.CONTAINS: "#94A3B8",
+    RelationshipType.HAS_SECTION: "#94A3B8",
     
     # Comparison - Amber
     RelationshipType.SAME_AS: "#CA8A04",
