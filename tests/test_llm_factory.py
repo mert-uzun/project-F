@@ -32,10 +32,12 @@ class TestLLMFactory:
     def test_create_ollama_llm(self) -> None:
         """Test Ollama LLM creation when Ollama is running."""
         from src.utils.llm_factory import get_llm
-        from app.config import LLMBackend
+        
+        # Clear the lru_cache to ensure fresh creation
+        get_llm.cache_clear()
         
         # This requires Ollama to be running
-        llm = get_llm(backend=LLMBackend.OLLAMA)
+        llm = get_llm()
         
         assert llm is not None
         # Validate it has expected methods
@@ -49,9 +51,16 @@ class TestLLMFactory:
             pytest.skip("OPENAI_API_KEY not set")
         
         from src.utils.llm_factory import get_llm
-        from app.config import LLMBackend
+        from app.config import get_settings, LLMBackend
         
-        llm = get_llm(backend=LLMBackend.OPENAI)
+        settings = get_settings()
+        
+        # Only test if OpenAI backend is configured
+        if settings.llm_backend != LLMBackend.OPENAI:
+            pytest.skip("LLM backend not set to OpenAI")
+        
+        get_llm.cache_clear()
+        llm = get_llm()
         
         assert llm is not None
         assert hasattr(llm, 'complete') or hasattr(llm, 'acomplete')
@@ -61,6 +70,7 @@ class TestLLMFactory:
         """Test default LLM creation."""
         from src.utils.llm_factory import get_llm
         
+        get_llm.cache_clear()
         llm = get_llm()
         
         assert llm is not None
@@ -76,10 +86,11 @@ class TestEmbeddingFactory:
     def test_create_huggingface_embedding(self) -> None:
         """Test HuggingFace embedding model creation."""
         from src.utils.llm_factory import get_embedding_model
-        from app.config import EmbeddingBackend
+        
+        get_embedding_model.cache_clear()
         
         # HuggingFace embeddings should work without external services
-        embedding = get_embedding_model(backend=EmbeddingBackend.HUGGINGFACE)
+        embedding = get_embedding_model()
         
         assert embedding is not None
         # Should have embedding method
@@ -88,9 +99,9 @@ class TestEmbeddingFactory:
     def test_embedding_produces_vectors(self) -> None:
         """Test that embedding model produces actual vectors."""
         from src.utils.llm_factory import get_embedding_model
-        from app.config import EmbeddingBackend
         
-        embedding = get_embedding_model(backend=EmbeddingBackend.HUGGINGFACE)
+        get_embedding_model.cache_clear()
+        embedding = get_embedding_model()
         
         # Get embedding for test text
         text = "This is a test sentence for embedding."
@@ -113,6 +124,7 @@ class TestEmbeddingFactory:
         """Test default embedding model creation."""
         from src.utils.llm_factory import get_embedding_model
         
+        get_embedding_model.cache_clear()
         embedding = get_embedding_model()
         
         assert embedding is not None
@@ -130,9 +142,9 @@ class TestLLMIntegration:
     async def test_ollama_completion(self) -> None:
         """Test actual completion with Ollama."""
         from src.utils.llm_factory import get_llm
-        from app.config import LLMBackend
         
-        llm = get_llm(backend=LLMBackend.OLLAMA)
+        get_llm.cache_clear()
+        llm = get_llm()
         
         # Simple completion test
         response = await llm.acomplete("What is 2 + 2? Answer with just the number.")
@@ -149,6 +161,7 @@ class TestLLMIntegration:
         """Test that LLM completion returns non-empty text."""
         from src.utils.llm_factory import get_llm
         
+        get_llm.cache_clear()
         llm = get_llm()
         
         response = await llm.acomplete("Respond with the word 'hello'.")

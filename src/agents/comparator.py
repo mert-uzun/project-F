@@ -270,11 +270,11 @@ class ComparatorAgent:
                     diff_pct = abs(norm_a - norm_b) / max(norm_a, norm_b) * 100
                     
                     # Determine severity based on difference
-                    if diff_pct > 50:
+                    if diff_pct >= 50:
                         severity = ConflictSeverity.CRITICAL
-                    elif diff_pct > 20:
+                    elif diff_pct >= 20:
                         severity = ConflictSeverity.HIGH
-                    elif diff_pct > 5:
+                    elif diff_pct >= 5:
                         severity = ConflictSeverity.MEDIUM
                     else:
                         severity = ConflictSeverity.LOW
