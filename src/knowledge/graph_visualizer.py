@@ -11,18 +11,31 @@ Color Psychology for Investment Bankers:
 - Critical info must "pop" immediately
 """
 
+from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from uuid import UUID
 
 from pyvis.network import Network
 
 from src.knowledge.schemas import Entity, EntityType, Relationship, RelationshipType
 from src.knowledge.graph_store import GraphStore, GraphNode, GraphEdge
-from src.agents.schemas import ConflictSeverity
 from src.utils.logger import get_logger
 
+# Import ConflictSeverity lazily to avoid circular import
+if TYPE_CHECKING:
+    from src.agents.schemas import ConflictSeverity as ConflictSeverityType
+
 logger = get_logger(__name__)
+
+
+# Local definition to avoid circular import
+class _Severity(str, Enum):
+    """Conflict severity levels (local copy to avoid circular import)."""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 # ============================================================================
