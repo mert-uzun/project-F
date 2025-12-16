@@ -24,6 +24,7 @@ from src.agents.reference_detector import (
     ReferenceType,
 )
 from src.knowledge.timeline_builder import Timeline, TimelineEvent, TimelineConflict, EventType
+from src.knowledge.schemas import EntityType
 from src.agents.schemas import ConflictSeverity, ConflictType
 
 

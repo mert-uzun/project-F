@@ -301,10 +301,12 @@ class TestMultiDocAnalyzer:
     @pytest.fixture
     def vector_store(self, tmp_path) -> VectorStore:
         """Create temp vector store."""
-        return VectorStore(
-            persist_directory=str(tmp_path / "chromadb"),
+        from src.knowledge.vector_store import VectorStoreConfig
+        config = VectorStoreConfig(
+            persist_directory=tmp_path / "chromadb",
             collection_name="test"
         )
+        return VectorStore(config)
     
     @pytest.mark.asyncio
     async def test_analyze_detects_variations(
