@@ -193,7 +193,7 @@ class TestGraphVisualizer:
         
         color = visualizer.get_node_color(entity)
         
-        assert color == SEVERITY_COLORS[ConflictSeverity.CRITICAL]
+        assert color == SEVERITY_COLORS[_Severity.CRITICAL]
     
     def test_save_html(self, visualizer, tmp_path) -> None:
         """Test HTML export."""
