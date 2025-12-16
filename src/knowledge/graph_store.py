@@ -523,7 +523,121 @@ class GraphStore:
         net.save_graph(str(output_path))
         logger.info(f"Saved graph visualization to {output_path}")
     
+    def merge_entities(
+        self,
+        keep_id: UUID,
+        merge_id: UUID,
+    ) -> None:
+        """
+        Merge two entities, keeping one and redirecting relationships.
+        
+        All relationships pointing to/from merge_id are redirected to keep_id.
+        The merge_id node is then removed.
+        
+        Args:
+            keep_id: Entity to keep
+            merge_id: Entity to merge into keep_id
+        """
+        keep_str = str(keep_id)
+        merge_str = str(merge_id)
+        
+        if keep_str not in self._graph:
+            logger.warning(f"Keep entity {keep_id} not in graph")
+            return
+        
+        if merge_str not in self._graph:
+            logger.warning(f"Merge entity {merge_id} not in graph")
+            return
+        
+        # Get all edges involving merge_id
+        in_edges = list(self._graph.in_edges(merge_str, data=True))
+        out_edges = list(self._graph.out_edges(merge_str, data=True))
+        
+        # Redirect incoming edges
+        for source, _, data in in_edges:
+            if source != keep_str:  # Avoid self-loops
+                self._graph.add_edge(source, keep_str, **data)
+        
+        # Redirect outgoing edges
+        for _, target, data in out_edges:
+            if target != keep_str:  # Avoid self-loops
+                self._graph.add_edge(keep_str, target, **data)
+        
+        # Merge attributes (keep canonical but add aliases)
+        keep_data = self._graph.nodes[keep_str]
+        merge_data = self._graph.nodes[merge_str]
+        
+        # Add merged value as alias
+        if "aliases" not in keep_data:
+            keep_data["aliases"] = []
+        keep_data["aliases"].append(merge_data.get("value", ""))
+        
+        # Remove merged node
+        self._graph.remove_node(merge_str)
+        
+        logger.debug(f"Merged entity {merge_id} into {keep_id}")
+    
+    def get_all_entities(
+        self,
+        document_id: UUID | None = None,
+    ) -> list["GraphNode"]:
+        """
+        Get all entities in the graph.
+        
+        Args:
+            document_id: Optional filter by source document
+            
+        Returns:
+            List of all GraphNodes
+        """
+        nodes: list[GraphNode] = []
+        
+        for node_id, node_data in self._graph.nodes(data=True):
+            if "entity" not in node_data:
+                continue
+            
+            entity = node_data["entity"]
+            
+            if document_id is not None:
+                if entity.source_document_id != document_id:
+                    continue
+            
+            nodes.append(GraphNode(entity=entity))
+        
+        return nodes
+    
+    def get_entities_by_document(
+        self,
+        document_ids: list[UUID],
+    ) -> dict[UUID, list["GraphNode"]]:
+        """
+        Get entities grouped by document.
+        
+        Args:
+            document_ids: List of document IDs
+            
+        Returns:
+            Dict mapping document_id to list of entities
+        """
+        result: dict[UUID, list[GraphNode]] = {
+            doc_id: [] for doc_id in document_ids
+        }
+        
+        for node_id, node_data in self._graph.nodes(data=True):
+            if "entity" not in node_data:
+                continue
+            
+            entity = node_data["entity"]
+            
+            if entity.source_document_id in result:
+                result[entity.source_document_id].append(
+                    GraphNode(entity=entity)
+                )
+        
+        return result
+    
     def clear(self) -> None:
         """Clear all nodes and edges."""
         self._graph.clear()
         logger.info("Cleared graph store")
+
