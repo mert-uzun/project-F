@@ -340,7 +340,7 @@ class CrossReferenceEngine:
                 target = target_node.entity
                 
                 # Categorize by relationship type
-                if rel.relationship_type in (RelationshipType.HAS_ROLE, RelationshipType.WORKS_FOR):
+                if rel.relationship_type in (RelationshipType.HAS_ROLE, RelationshipType.EMPLOYED_BY):
                     if rel.relationship_type == RelationshipType.HAS_ROLE:
                         roles.append(target.value)
                     else:
