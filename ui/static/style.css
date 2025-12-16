@@ -1,0 +1,225 @@
+/* Cross-Document Conflict Detector - Custom Styling */
+/* Investment Banking Dark Mode Theme */
+
+/* === Base Colors === */
+:root {
+    --bg-primary: #0E1117;
+    --bg-secondary: #1E3A5F;
+    --bg-card: #262730;
+    --bg-hover: #363740;
+    --accent-gold: #D4AF37;
+    --accent-gold-dim: #8B7355;
+    --text-primary: #FAFAFA;
+    --text-secondary: #B0B0B0;
+    --severity-critical: #DC3545;
+    --severity-high: #FF6B35;
+    --severity-medium: #FFC107;
+    --severity-low: #28A745;
+    --terminal-green: #00cc96;
+}
+
+/* === Main App Background === */
+.stApp {
+    background-color: var(--bg-primary);
+}
+
+/* === Sidebar Styling === */
+[data-testid="stSidebar"] {
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--accent-gold-dim);
+}
+
+[data-testid="stSidebar"] .stButton button {
+    background-color: transparent;
+    border: 1px solid var(--accent-gold-dim);
+    color: var(--text-primary);
+    text-align: left;
+    transition: all 0.2s;
+}
+
+[data-testid="stSidebar"] .stButton button:hover {
+    background-color: var(--accent-gold);
+    color: var(--bg-primary);
+    border-color: var(--accent-gold);
+}
+
+/* === Conflict Cards === */
+.conflict-card {
+    border-left: 4px solid var(--severity-critical);
+    background-color: var(--bg-card);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.conflict-card:hover {
+    background-color: var(--bg-hover);
+}
+
+.conflict-card.severity-critical {
+    border-left-color: var(--severity-critical);
+}
+
+.conflict-card.severity-high {
+    border-left-color: var(--severity-high);
+}
+
+.conflict-card.severity-medium {
+    border-left-color: var(--severity-medium);
+}
+
+.conflict-card.severity-low {
+    border-left-color: var(--severity-low);
+}
+
+/* === Severity Badges === */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-critical {
+    background-color: var(--severity-critical);
+    color: white;
+}
+
+.badge-high {
+    background-color: var(--severity-high);
+    color: white;
+}
+
+.badge-medium {
+    background-color: var(--severity-medium);
+    color: black;
+}
+
+.badge-low {
+    background-color: var(--severity-low);
+    color: white;
+}
+
+/* === Reasoning/Audit Log === */
+.reasoning-log {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--terminal-green);
+    background-color: var(--bg-primary);
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.log-line {
+    margin: 2px 0;
+    line-height: 1.4;
+}
+
+.log-timestamp {
+    color: #666;
+}
+
+.log-type-INFO {
+    color: #60a5fa;
+}
+
+.log-type-EXTRACT {
+    color: #a78bfa;
+}
+
+.log-type-NORMALIZE {
+    color: #818cf8;
+}
+
+.log-type-COMPARE {
+    color: #fbbf24;
+}
+
+.log-type-ALERT {
+    color: var(--severity-critical);
+    font-weight: bold;
+}
+
+/* === Data Inspector === */
+.inspector-panel {
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+/* === Gold Accent Headers === */
+h1, h2, h3 {
+    color: var(--text-primary);
+}
+
+.gold-accent {
+    color: var(--accent-gold);
+}
+
+/* === Metric Cards === */
+.metric-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--accent-gold-dim);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--accent-gold);
+}
+
+.metric-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+/* === PDF Viewer Container === */
+.pdf-container {
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    padding: 8px;
+    border: 1px solid var(--accent-gold-dim);
+}
+
+/* === Buttons === */
+.stButton > button {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-gold-dim);
+    transition: all 0.2s;
+}
+
+.stButton > button:hover {
+    background-color: var(--accent-gold);
+    color: var(--bg-primary);
+    border-color: var(--accent-gold);
+}
+
+/* === Primary Action Button === */
+.primary-action button {
+    background-color: var(--accent-gold) !important;
+    color: var(--bg-primary) !important;
+    font-weight: bold;
+}
+
+/* === Tables === */
+.dataframe {
+    background-color: var(--bg-card);
+}
+
+/* === Expanders === */
+.streamlit-expanderHeader {
+    background-color: var(--bg-card);
+    border: 1px solid var(--accent-gold-dim);
+}
