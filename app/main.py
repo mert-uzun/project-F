@@ -434,12 +434,12 @@ async def search_entities(
         
         parsed_doc_id = UUID(document_id) if document_id else None
         
-        # Run search
-        results = await engine.search(
+        # Run search (synchronous method)
+        results = engine.search(
             query=query,
-            entity_type=parsed_entity_type,
-            document_id=parsed_doc_id,
-            limit=limit,
+            entity_types=[parsed_entity_type] if parsed_entity_type else None,
+            document_ids=[parsed_doc_id] if parsed_doc_id else None,
+            max_results=limit,
         )
         
         return {
@@ -448,14 +448,15 @@ async def search_entities(
             "result_count": len(results),
             "results": [
                 {
-                    "reference_id": str(r.reference_id),
-                    "entity_value": r.entity_value,
-                    "entity_type": r.entity_type.value if r.entity_type else None,
-                    "document_name": r.source_document_name,
+                    "entity_id": str(r.entity.entity_id),
+                    "entity_value": r.entity.value,
+                    "entity_type": r.entity.entity_type.value,
+                    "document_id": str(r.document_id),
+                    "document_name": r.document_name,
                     "page": r.page_number,
                     "context": r.context[:200] if r.context else None,
-                    "match_type": r.match_type,
-                    "similarity_score": r.similarity_score,
+                    "match_type": r.relationship_to_query,
+                    "relevance_score": r.relevance_score,
                 }
                 for r in results
             ],
@@ -722,15 +723,22 @@ async def detect_missing_documents(
         
         detector = ReferenceDetector()
         
-        # Get chunks from vector store
+        # Get chunks from vector store via search and extract references
         all_references = []
         for uid in uuids:
-            chunks = vector_store.get_by_document(str(uid))
-            for chunk in chunks:
-                refs = detector.extract_references(
-                    chunk,
+            # Search for all chunks in this document
+            search_results = vector_store.search(
+                query="",
+                top_k=1000,
+                filter_document_id=uid,
+            )
+            for result in search_results:
+                # Use text-based extraction instead of chunk-based
+                refs = detector.extract_references_from_text(
+                    result.content,
                     uid,
                     f"Document_{str(uid)[:8]}",
+                    result.metadata.get("page_number", 1),
                 )
                 all_references.extend(refs)
         
