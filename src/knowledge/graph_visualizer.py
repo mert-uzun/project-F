@@ -215,7 +215,7 @@ class GraphVisualizer:
             is_conflict = entity.entity_id in self.conflict_entities
             
             if is_conflict and highlight_conflicts:
-                color = SEVERITY_COLORS[ConflictSeverity.CRITICAL]
+                color = SEVERITY_COLORS[_Severity.CRITICAL]
                 border_width = 4
             else:
                 color = ENTITY_COLORS.get(entity.entity_type, "#94A3B8")
@@ -458,7 +458,7 @@ class GraphVisualizer:
     def get_node_color(self, entity: Entity) -> str:
         """Get color for an entity node."""
         if entity.entity_id in self.conflict_entities:
-            return SEVERITY_COLORS[ConflictSeverity.CRITICAL]
+            return SEVERITY_COLORS[_Severity.CRITICAL]
         return ENTITY_COLORS.get(entity.entity_type, "#94A3B8")
     
     def get_edge_color(self, relationship: Relationship) -> str:
