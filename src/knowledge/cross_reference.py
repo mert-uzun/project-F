@@ -231,7 +231,6 @@ class CrossReferenceEngine:
                 for search_result in semantic_results:
                     # Skip results not in requested documents
                     if query.document_ids:
-                        from uuid import UUID
                         result_doc_id = UUID(search_result.document_id)
                         if result_doc_id not in query.document_ids:
                             continue
