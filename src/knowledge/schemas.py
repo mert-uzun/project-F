@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class EntityType(str, Enum):
@@ -132,8 +132,7 @@ class Entity(BaseModel):
         description="Additional structured attributes"
     )
 
-    class Config:
-        json_encoders = {UUID: str}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class Relationship(BaseModel):
@@ -167,8 +166,7 @@ class Relationship(BaseModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {UUID: str}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class KnowledgeGraphNode(BaseModel):

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DocumentType(str, Enum):
@@ -72,13 +72,9 @@ class DocumentMetadata(BaseModel):
     parser_used: str = Field(..., description="Parser used (llamaparse, unstructured)")
     parse_duration_seconds: float = Field(default=0.0, ge=0, description="Time to parse")
     
-    class Config:
-        """Pydantic config."""
-
-        json_encoders = {
-            Path: str,
-            UUID: str,
-        }
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
 
 class ChunkMetadata(BaseModel):
@@ -144,9 +140,6 @@ class EntityExtraction(BaseModel):
     source_page: int = Field(..., ge=1, description="Page number for citation")
     context: str = Field(..., description="Surrounding context for verification")
     
-    class Config:
-        """Pydantic config."""
-
-        json_encoders = {
-            UUID: str,
-        }
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
