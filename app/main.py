@@ -524,10 +524,11 @@ async def generate_report(
             formal_style=True,
         )
         
-        generator = ReportGenerator(config=config)
+        generator = ReportGenerator()
         summary = await generator.generate_executive_summary(
             analysis_report,
             timeline=timeline,
+            config=config,
         )
         
         logger.info(f"Report generated, model used: {summary.model_used}")
