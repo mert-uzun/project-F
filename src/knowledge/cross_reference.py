@@ -221,13 +221,21 @@ class CrossReferenceEngine:
         # 2. Semantic search (if enabled)
         if query.include_semantic and len(results) < query.max_results:
             try:
+                # Note: VectorStore.search doesn't support multiple document_ids,
+                # so we search without filter and apply document filter manually
                 semantic_results = self.vector_store.search(
-                    query_text=query.query,
-                    n_results=query.max_results - len(results),
-                    document_ids=query.document_ids,
+                    query=query.query,
+                    top_k=query.max_results - len(results),
                 )
                 
                 for search_result in semantic_results:
+                    # Skip results not in requested documents
+                    if query.document_ids:
+                        from uuid import UUID
+                        result_doc_id = UUID(search_result.document_id)
+                        if result_doc_id not in query.document_ids:
+                            continue
+                    
                     # Extract entities from the chunk
                     chunk_entities = self._get_entities_from_chunk(
                         search_result.chunk_id
@@ -246,10 +254,10 @@ class CrossReferenceEngine:
                             entity=entity,
                             document_id=search_result.document_id,
                             document_name=f"Document {str(search_result.document_id)[:8]}",
-                            page_number=search_result.page_number or 1,
+                            page_number=search_result.metadata.get("page_number", 1),
                             context=search_result.content[:200],
                             relationship_to_query="semantic_match",
-                            relevance_score=search_result.score,
+                            relevance_score=search_result.similarity,
                         ))
             except Exception as e:
                 logger.warning(f"Semantic search failed: {e}")
