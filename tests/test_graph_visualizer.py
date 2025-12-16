@@ -14,10 +14,10 @@ from src.knowledge.graph_visualizer import (
     ENTITY_COLORS,
     SEVERITY_COLORS,
     RELATIONSHIP_COLORS,
+    _Severity,  # Local enum to avoid circular import
 )
 from src.knowledge.schemas import Entity, EntityType, RelationshipType
 from src.knowledge.graph_store import GraphStore
-from src.agents.schemas import ConflictSeverity
 
 
 class TestColorSchemes:
@@ -25,10 +25,10 @@ class TestColorSchemes:
     
     def test_severity_colors_defined(self) -> None:
         """Test all severity levels have colors."""
-        assert ConflictSeverity.CRITICAL in SEVERITY_COLORS
-        assert ConflictSeverity.HIGH in SEVERITY_COLORS
-        assert ConflictSeverity.MEDIUM in SEVERITY_COLORS
-        assert ConflictSeverity.LOW in SEVERITY_COLORS
+        assert _Severity.CRITICAL in SEVERITY_COLORS
+        assert _Severity.HIGH in SEVERITY_COLORS
+        assert _Severity.MEDIUM in SEVERITY_COLORS
+        assert _Severity.LOW in SEVERITY_COLORS
     
     def test_entity_colors_defined(self) -> None:
         """Test main entity types have colors."""
