@@ -5,8 +5,8 @@ Provides REST API endpoints for document ingestion,
 conflict detection, analysis, and reporting.
 """
 
+from app.config import Settings, get_settings
 from app.main import app
-from app.config import get_settings, Settings
 
 __all__ = [
     "app",

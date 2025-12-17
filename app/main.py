@@ -4,10 +4,11 @@ FastAPI Application Entry Point.
 Cross-Document Conflict Detector API.
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
@@ -68,74 +69,73 @@ async def get_config() -> dict[str, str]:
 async def ingest_document(file: UploadFile = File(...)) -> dict[str, str | int]:
     """
     Ingest a PDF document.
-    
+
     Parses the document, extracts tables, and stores in vector/graph databases.
     """
-    from pathlib import Path
     from uuid import uuid4
-    
-    from src.ingestion.pdf_parser import PDFParser
+
     from src.ingestion.chunker import chunk_document
-    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
-    from src.knowledge.graph_store import GraphStore
+    from src.ingestion.pdf_parser import PDFParser
     from src.knowledge.entity_extractor import EntityExtractor
-    
+    from src.knowledge.graph_store import GraphStore
+    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
+
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
-    
+
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
-    
+
     logger.info(f"Received document for ingestion: {file.filename}")
-    
+
     try:
         # 1. Save uploaded file
         upload_path = settings.data_uploads_dir / f"{uuid4()}_{file.filename}"
         content = await file.read()
         upload_path.write_bytes(content)
         logger.info(f"Saved upload to {upload_path}")
-        
+
         # 2. Parse with LlamaParse (or fallback)
         parser = PDFParser(
             llama_api_key=settings.llama_cloud_api_key or None,
             prefer_llamaparse=bool(settings.llama_cloud_api_key),
         )
         parse_result = await parser.parse(upload_path)
-        
+
         # 3. Chunk semantically
         parse_result = chunk_document(parse_result)
         logger.info(f"Created {len(parse_result.chunks)} chunks")
-        
+
         # 4. Store in vector DB
         vector_store = VectorStore(VectorStoreConfig(
             persist_directory=settings.chroma_persist_dir,
         ))
         chunks_added = vector_store.add_chunks(parse_result.chunks)
-        
+
         # 5. Extract entities to graph
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         extractor = EntityExtractor()
         entity_count = 0
         relationship_count = 0
-        
+
         for chunk in parse_result.chunks:
             result = await extractor.extract(chunk)
             graph_store.add_entities(result.entities)
             graph_store.add_relationships(result.relationships)
             entity_count += len(result.entities)
             relationship_count += len(result.relationships)
-        
+
         # Save graph
         graph_store.save()
-        
+
         logger.info(
             f"Ingestion complete: {chunks_added} chunks, "
             f"{entity_count} entities, {relationship_count} relationships"
         )
-        
+
         return {
             "status": "success",
             "message": f"Document '{file.filename}' ingested successfully",
@@ -147,7 +147,7 @@ async def ingest_document(file: UploadFile = File(...)) -> dict[str, str | int]:
             "entities": entity_count,
             "relationships": relationship_count,
         }
-        
+
     except Exception as e:
         logger.error(f"Ingestion failed: {e}")
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
@@ -157,30 +157,30 @@ async def ingest_document(file: UploadFile = File(...)) -> dict[str, str | int]:
 async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
     """
     Detect conflicts across specified documents.
-    
+
     Uses the Comparator Agent to find contradictions,
     then the Judge Agent to verify and generate the report.
     """
     from uuid import UUID
-    
+
     from src.agents.comparator import ComparatorAgent
     from src.agents.judge import JudgeAgent
     from src.agents.schemas import ComparisonQuery
-    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
     from src.knowledge.graph_store import GraphStore
-    
+    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
+
     if len(document_ids) < 2:
         raise HTTPException(
             status_code=400,
             detail="At least 2 documents required for conflict detection",
         )
-    
+
     logger.info(f"Conflict detection requested for documents: {document_ids}")
-    
+
     try:
         # Parse document IDs
         uuids = [UUID(doc_id) for doc_id in document_ids]
-        
+
         # Initialize stores
         vector_store = VectorStore(VectorStoreConfig(
             persist_directory=settings.chroma_persist_dir,
@@ -188,19 +188,19 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         # Create comparison query
         query = ComparisonQuery(
             document_ids=uuids,
             focus_areas=["salary", "equity", "dates", "parties"],
         )
-        
+
         # 1. Run Comparator Agent
         comparator = ComparatorAgent(vector_store, graph_store)
         conflicts = await comparator.compare(query)
-        
+
         logger.info(f"Comparator found {len(conflicts)} potential conflicts")
-        
+
         # 2. Run Judge Agent for verification
         judge = JudgeAgent(vector_store, graph_store)
         report = await judge.verify_and_report(
@@ -208,9 +208,9 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
             uuids,
             document_ids,  # Use IDs as names for now
         )
-        
+
         logger.info(f"Judge verified: {report.total_verified} of {report.total_conflicts_detected}")
-        
+
         # 3. Return report as JSON
         return {
             "status": "success",
@@ -234,7 +234,7 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
                 for flag in report.red_flags
             ],
         }
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid document ID: {e}")
     except Exception as e:
@@ -250,25 +250,25 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
 async def analyze_documents(document_ids: list[str]) -> dict[str, Any]:
     """
     Run multi-document analysis across specified documents.
-    
+
     Detects entity variations, conflicts, and unanimous entities.
     Uses Entity Resolution with 0.85 threshold.
     """
     from uuid import UUID
-    
-    from src.agents.multi_doc_analyzer import MultiDocAnalyzer, DocumentSet
-    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
+
+    from src.agents.multi_doc_analyzer import DocumentSet, MultiDocAnalyzer
     from src.knowledge.graph_store import GraphStore
-    
+    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
+
     if not document_ids:
         raise HTTPException(status_code=400, detail="No document IDs provided")
-    
+
     logger.info(f"Multi-document analysis requested for {len(document_ids)} documents")
-    
+
     try:
         # Parse document IDs
         uuids = [UUID(doc_id) for doc_id in document_ids]
-        
+
         # Initialize stores
         vector_store = VectorStore(VectorStoreConfig(
             persist_directory=settings.chroma_persist_dir,
@@ -276,19 +276,19 @@ async def analyze_documents(document_ids: list[str]) -> dict[str, Any]:
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         # Create document set
         doc_set = DocumentSet(
             document_ids=uuids,
             document_names={str(uid): f"Document_{str(uid)[:8]}" for uid in uuids},
         )
-        
+
         # Run analysis
         analyzer = MultiDocAnalyzer(vector_store, graph_store)
         report = await analyzer.analyze(doc_set, resolve_entities=True)
-        
+
         logger.info(f"Analysis complete: {report.conflict_count} conflicts found")
-        
+
         return {
             "status": "success",
             "summary": report.to_summary(),
@@ -313,7 +313,7 @@ async def analyze_documents(document_ids: list[str]) -> dict[str, Any]:
             ],
             "analysis_time_seconds": report.analysis_time_seconds,
         }
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid document ID: {e}")
     except Exception as e:
@@ -325,31 +325,31 @@ async def analyze_documents(document_ids: list[str]) -> dict[str, Any]:
 async def get_timeline(document_ids: list[str]) -> dict[str, Any]:
     """
     Build a chronological timeline from documents.
-    
+
     Extracts DATE entities, detects event types, and finds temporal conflicts.
     """
     from uuid import UUID
-    
-    from src.knowledge.timeline_builder import TimelineBuilder
+
     from src.knowledge.graph_store import GraphStore
-    
+    from src.knowledge.timeline_builder import TimelineBuilder
+
     if not document_ids:
         raise HTTPException(status_code=400, detail="No document IDs provided")
-    
+
     logger.info(f"Timeline requested for {len(document_ids)} documents")
-    
+
     try:
         uuids = [UUID(doc_id) for doc_id in document_ids]
-        
+
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         builder = TimelineBuilder(graph_store)
         timeline = builder.build_timeline(uuids)
-        
+
         logger.info(f"Timeline built: {timeline.event_count} events, {timeline.conflict_count} conflicts")
-        
+
         return {
             "status": "success",
             "event_count": timeline.event_count,
@@ -382,7 +382,7 @@ async def get_timeline(document_ids: list[str]) -> dict[str, Any]:
                 for c in timeline.conflicts
             ],
         }
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid document ID: {e}")
     except Exception as e:
@@ -399,21 +399,21 @@ async def search_entities(
 ) -> dict[str, Any]:
     """
     Search for entity mentions across documents.
-    
+
     Combines graph queries and semantic search.
     """
     from uuid import UUID
-    
+
     from src.knowledge.cross_reference import CrossReferenceEngine
-    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
     from src.knowledge.graph_store import GraphStore
     from src.knowledge.schemas import EntityType
-    
+    from src.knowledge.vector_store import VectorStore, VectorStoreConfig
+
     if not query or len(query) < 2:
         raise HTTPException(status_code=400, detail="Query must be at least 2 characters")
-    
+
     logger.info(f"Entity search: '{query}', type={entity_type}, doc={document_id}")
-    
+
     try:
         vector_store = VectorStore(VectorStoreConfig(
             persist_directory=settings.chroma_persist_dir,
@@ -421,9 +421,9 @@ async def search_entities(
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         engine = CrossReferenceEngine(vector_store, graph_store)
-        
+
         # Parse filters
         parsed_entity_type = None
         if entity_type:
@@ -431,9 +431,9 @@ async def search_entities(
                 parsed_entity_type = EntityType(entity_type.lower())
             except ValueError:
                 pass  # Ignore invalid type
-        
+
         parsed_doc_id = UUID(document_id) if document_id else None
-        
+
         # Run search (synchronous method)
         results = engine.search(
             query=query,
@@ -441,7 +441,7 @@ async def search_entities(
             document_ids=[parsed_doc_id] if parsed_doc_id else None,
             max_results=limit,
         )
-        
+
         return {
             "status": "success",
             "query": query,
@@ -461,7 +461,7 @@ async def search_entities(
                 for r in results
             ],
         }
-        
+
     except Exception as e:
         logger.error(f"Entity search failed: {e}")
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
@@ -475,34 +475,33 @@ async def generate_report(
 ) -> dict[str, Any]:
     """
     Generate an executive summary report.
-    
+
     Formal investment banking memo style with key metrics,
     critical issues, and recommendations.
     """
     from uuid import UUID
-    
-    from src.agents.report_generator import ReportGenerator, ReportConfig
-    from src.agents.multi_doc_analyzer import MultiDocAnalyzer, DocumentSet
-    from src.agents.reference_detector import ReferenceDetector
+
+    from src.agents.multi_doc_analyzer import DocumentSet, MultiDocAnalyzer
+    from src.agents.report_generator import ReportConfig, ReportGenerator
+    from src.knowledge.graph_store import GraphStore
     from src.knowledge.timeline_builder import TimelineBuilder
     from src.knowledge.vector_store import VectorStore, VectorStoreConfig
-    from src.knowledge.graph_store import GraphStore
-    
+
     if not document_ids:
         raise HTTPException(status_code=400, detail="No document IDs provided")
-    
+
     logger.info(f"Executive report requested for {len(document_ids)} documents")
-    
+
     try:
         uuids = [UUID(doc_id) for doc_id in document_ids]
-        
+
         vector_store = VectorStore(VectorStoreConfig(
             persist_directory=settings.chroma_persist_dir,
         ))
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         # 1. Run multi-doc analysis
         doc_set = DocumentSet(
             document_ids=uuids,
@@ -510,29 +509,29 @@ async def generate_report(
         )
         analyzer = MultiDocAnalyzer(vector_store, graph_store)
         analysis_report = await analyzer.analyze(doc_set)
-        
+
         # 2. Build timeline if requested
         timeline = None
         if include_timeline:
             builder = TimelineBuilder(graph_store)
             timeline = builder.build_timeline(uuids)
-        
+
         # 3. Generate executive summary
         config = ReportConfig(
             include_timeline=include_timeline,
             include_missing_docs=include_missing_docs,
             formal_style=True,
         )
-        
+
         generator = ReportGenerator()
         summary = await generator.generate_executive_summary(
             analysis_report,
             timeline=timeline,
             config=config,
         )
-        
+
         logger.info(f"Report generated, model used: {summary.model_used}")
-        
+
         return {
             "status": "success",
             "document_count": summary.document_count,
@@ -544,7 +543,7 @@ async def generate_report(
             "key_findings": summary.key_findings,
             "action_items": summary.action_items,
         }
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid document ID: {e}")
     except Exception as e:
@@ -559,26 +558,26 @@ async def get_graph_data(
 ) -> dict[str, Any]:
     """
     Get knowledge graph data for visualization.
-    
+
     Returns nodes and edges in a format suitable for frontend rendering.
     """
     from uuid import UUID
-    
+
     from src.knowledge.graph_store import GraphStore
-    from src.knowledge.graph_visualizer import ENTITY_COLORS, _Severity, SEVERITY_COLORS
-    
+    from src.knowledge.graph_visualizer import ENTITY_COLORS
+
     logger.info(f"Graph data requested, max_nodes={max_nodes}")
-    
+
     try:
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         # Parse document IDs if provided
         doc_filter = None
         if document_ids:
             doc_filter = [UUID(d.strip()) for d in document_ids.split(",")]
-        
+
         # Get all entities
         if doc_filter:
             entities_by_doc = graph_store.get_entities_by_document(doc_filter)
@@ -587,24 +586,24 @@ async def get_graph_data(
                 all_nodes.extend(nodes)
         else:
             all_nodes = graph_store.get_all_entities()
-        
+
         # Limit nodes
         all_nodes = all_nodes[:max_nodes]
-        
+
         # Build node list
         nodes = []
         node_ids = set()
-        
+
         for graph_node in all_nodes:
             entity = graph_node.entity
             node_id = str(entity.entity_id)
-            
+
             if node_id in node_ids:
                 continue
             node_ids.add(node_id)
-            
+
             color = ENTITY_COLORS.get(entity.entity_type, "#94A3B8")
-            
+
             nodes.append({
                 "id": node_id,
                 "label": entity.value[:30],
@@ -613,7 +612,7 @@ async def get_graph_data(
                 "document_id": str(entity.source_document_id),
                 "page": entity.source_page,
             })
-        
+
         # Build edge list
         edges = []
         for source, target, edge_data in graph_store.graph.edges(data=True):
@@ -621,13 +620,13 @@ async def get_graph_data(
                 rel_type = edge_data.get("relationship_type", "related")
                 if hasattr(rel_type, "value"):
                     rel_type = rel_type.value
-                
+
                 edges.append({
                     "source": source,
                     "target": target,
                     "type": rel_type,
                 })
-        
+
         return {
             "status": "success",
             "node_count": len(nodes),
@@ -635,7 +634,7 @@ async def get_graph_data(
             "nodes": nodes,
             "edges": edges,
         }
-        
+
     except Exception as e:
         logger.error(f"Graph data fetch failed: {e}")
         raise HTTPException(status_code=500, detail=f"Graph failed: {str(e)}")
@@ -648,48 +647,48 @@ async def get_graph_html(
 ) -> dict[str, str]:
     """
     Generate interactive PyVis HTML visualization.
-    
+
     Returns the HTML content as a string.
     """
-    from uuid import UUID
-    from pathlib import Path
     import tempfile
-    
+    from pathlib import Path
+    from uuid import UUID
+
     from src.knowledge.graph_store import GraphStore
     from src.knowledge.graph_visualizer import GraphVisualizer
-    
+
     logger.info(f"Graph HTML requested, max_nodes={max_nodes}")
-    
+
     try:
         graph_store = GraphStore(
             persist_path=settings.data_graphs_dir / "knowledge_graph.json"
         )
-        
+
         # Parse document IDs if provided
         doc_filter = None
         if document_ids:
             doc_filter = [UUID(d.strip()) for d in document_ids.split(",")]
-        
+
         # Generate visualization
         visualizer = GraphVisualizer(graph_store)
         visualizer.generate_network(
             document_ids=doc_filter,
             max_nodes=max_nodes,
         )
-        
+
         # Save to temp file and read content
         with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
             temp_path = Path(f.name)
-        
+
         visualizer.save_html(temp_path, include_legend=True)
         html_content = temp_path.read_text()
         temp_path.unlink()  # Clean up
-        
+
         return {
             "status": "success",
             "html": html_content,
         }
-        
+
     except Exception as e:
         logger.error(f"Graph HTML generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Graph HTML failed: {str(e)}")
@@ -701,29 +700,28 @@ async def detect_missing_documents(
 ) -> dict[str, Any]:
     """
     Detect referenced documents that weren't uploaded.
-    
+
     Scans for patterns like "Exhibit A", "pursuant to the Agreement", etc.
     """
     from uuid import UUID
-    
+
     from src.agents.reference_detector import ReferenceDetector
     from src.knowledge.vector_store import VectorStore, VectorStoreConfig
-    from src.knowledge.graph_store import GraphStore
-    
+
     if not document_ids:
         raise HTTPException(status_code=400, detail="No document IDs provided")
-    
+
     logger.info(f"Missing document detection for {len(document_ids)} documents")
-    
+
     try:
         uuids = [UUID(doc_id) for doc_id in document_ids]
-        
+
         vector_store = VectorStore(VectorStoreConfig(
             persist_directory=settings.chroma_persist_dir,
         ))
-        
+
         detector = ReferenceDetector()
-        
+
         # Get chunks from vector store via search and extract references
         all_references = []
         for uid in uuids:
@@ -742,15 +740,15 @@ async def detect_missing_documents(
                     result.metadata.get("page_number", 1),
                 )
                 all_references.extend(refs)
-        
+
         # Build uploaded document list
         uploaded_docs = [
             {"document_id": uid, "filename": f"Document_{str(uid)[:8]}.pdf"}
             for uid in uuids
         ]
-        
+
         report = detector.find_missing_documents(all_references, uploaded_docs)
-        
+
         return {
             "status": "success",
             "total_references": report.total_references,
@@ -770,7 +768,7 @@ async def detect_missing_documents(
                 for ref in report.missing_documents[:50]
             ],
         }
-        
+
     except Exception as e:
         logger.error(f"Missing document detection failed: {e}")
         raise HTTPException(status_code=500, detail=f"Detection failed: {str(e)}")
@@ -778,7 +776,7 @@ async def detect_missing_documents(
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.api_host,
