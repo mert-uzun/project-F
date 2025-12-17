@@ -1,0 +1,55 @@
+# Docker ignore file
+# Reduces build context size and prevents sensitive files from being included
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+
+# Virtual environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Data (use volumes instead)
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Agent
+.agent/
+.gemini/
+
+# Misc
+*.log
+logs/
+.DS_Store
+Thumbs.db

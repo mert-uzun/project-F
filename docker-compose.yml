@@ -1,0 +1,108 @@
+# =============================================================================
+# Cross-Document Conflict Detector - Docker Compose
+# Development and Production configurations
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # FastAPI Backend
+  # ===========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: conflict-detector-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - conflict-detector-network
+
+  # ===========================================================================
+  # Streamlit UI
+  # ===========================================================================
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: conflict-detector-ui
+    command: ["streamlit", "run", "ui/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - conflict-detector-network
+
+  # ===========================================================================
+  # Ollama (Local LLM) - Optional
+  # ===========================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: conflict-detector-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - conflict-detector-network
+    profiles:
+      - local-llm
+
+  # ===========================================================================
+  # ChromaDB (Vector Store) - Standalone mode
+  # ===========================================================================
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: conflict-detector-chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    restart: unless-stopped
+    networks:
+      - conflict-detector-network
+    profiles:
+      - standalone-chroma
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  conflict-detector-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  ollama-data:
+  chroma-data:

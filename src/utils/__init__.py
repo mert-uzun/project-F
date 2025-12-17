@@ -7,7 +7,8 @@ Provides LLM/embedding factory and logging utilities.
 from src.utils.llm_factory import (
     get_llm,
     get_embedding_model,
-    LLMConfig,
+    configure_llama_index,
+    LLMFactoryError,
 )
 from src.utils.logger import (
     get_logger,
@@ -19,7 +20,8 @@ __all__ = [
     # LLM Factory
     "get_llm",
     "get_embedding_model",
-    "LLMConfig",
+    "configure_llama_index",
+    "LLMFactoryError",
     # Logging
     "get_logger",
     "setup_logging",
