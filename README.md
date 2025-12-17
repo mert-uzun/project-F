@@ -21,15 +21,20 @@ Layer 1: Ingestion Engine (The Moat)
 Layer 2: Knowledge Layer (GraphRAG)
 ├── Vector Store (ChromaDB) → Semantic search
 ├── Graph Store (NetworkX) → Entity relationships
-└── Entity Extraction → Structured data from text
+├── Entity Resolution → Deduplicate aliases
+├── Cross-Reference Engine → Find mentions across docs
+└── Timeline Builder → Chronological event tracking
 
 Layer 3: Logic Agents
 ├── Comparator → Detect value mismatches
-└── Judge → Verify and prevent hallucinations
+├── Judge → Verify and prevent hallucinations
+├── Multi-Doc Analyzer → N-way conflict detection
+├── Reference Detector → Find missing documents
+└── Report Generator → Executive summaries
 
 Layer 4: Interface
-├── FastAPI Backend
-└── Streamlit UI (coming soon)
+├── FastAPI Backend → 11 REST endpoints
+└── Streamlit UI → Investor-facing demo
 ```
 
 ## 🚀 Quick Start
@@ -55,11 +60,17 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
-### Run the API
+### Run the Application
 
 ```bash
+# Terminal 1: Start the API
 uvicorn app.main:app --reload
+
+# Terminal 2: Start the UI
+streamlit run ui/app.py
 ```
+
+Then open http://localhost:8501 in your browser.
 
 ### Local LLM Setup (Privacy Mode)
 
@@ -76,16 +87,45 @@ OLLAMA_MODEL=llama3
 
 ```
 project-F/
-├── app/                 # FastAPI application
+├── app/                 # FastAPI application (11 endpoints)
 ├── src/
-│   ├── ingestion/      # PDF parsing & chunking
-│   ├── knowledge/      # Vector & Graph stores
-│   ├── agents/         # Conflict detection logic
-│   └── utils/          # LLM factory, logging
-├── tests/              # Test suite
-├── data/               # Uploads, processed files, graphs
-└── scripts/            # CLI utilities
+│   ├── ingestion/       # PDF parsing & chunking
+│   ├── knowledge/       # Vector/Graph stores, entity resolution
+│   ├── agents/          # Conflict detection, reports
+│   └── utils/           # LLM factory, logging
+├── ui/                  # Streamlit UI (9 components)
+│   ├── components/      # Upload, Analysis, Conflicts, Graph, Timeline, Report
+│   ├── utils/           # API client, formatters
+│   └── static/          # CSS styling
+├── tests/               # Test suite (184 tests)
+├── data/                # Uploads, processed files, graphs
+└── scripts/             # CLI utilities
 ```
+
+## 🎨 UI Features
+
+- **Document Upload**: Drag-and-drop PDF upload with progress tracking
+- **Data Inspector**: Side-by-side PDF vs parsed output view
+- **Analysis Dashboard**: Live reasoning trace with audit log
+- **Conflict Workbench**: Master-detail view with PDF citations
+- **Knowledge Graph**: Interactive PyVis visualization
+- **Timeline View**: Chronological events with conflict highlighting
+- **Executive Summary**: Downloadable markdown reports
+
+## 🔌 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/ingest` | POST | Upload and process PDF |
+| `/detect-conflicts` | POST | Pairwise conflict detection |
+| `/analyze` | POST | Multi-document analysis |
+| `/timeline` | POST | Build event timeline |
+| `/search` | GET | Entity search |
+| `/report` | POST | Generate executive summary |
+| `/graph` | GET | Graph data JSON |
+| `/graph/html` | GET | Interactive graph HTML |
+| `/missing-documents` | POST | Find referenced but not uploaded docs |
 
 ## 🔒 Privacy First
 
