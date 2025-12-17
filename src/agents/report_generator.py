@@ -102,6 +102,7 @@ Format as JSON with keys: description, impact, action
 # Schemas
 # ============================================================================
 
+
 class ExecutiveSummary(BaseModel):
     """Generated executive summary memorandum."""
 
@@ -141,6 +142,7 @@ class ReportConfig(BaseModel):
 # Report Generator
 # ============================================================================
 
+
 class ReportGenerator:
     """
     Generate executive summaries and formal reports.
@@ -168,6 +170,7 @@ class ReportGenerator:
         if self._llm is None:
             try:
                 from src.utils.llm_factory import get_llm
+
                 self._llm = get_llm()
             except Exception as e:
                 logger.warning(f"Could not load LLM: {e}")
@@ -193,6 +196,7 @@ class ReportGenerator:
             ExecutiveSummary with formatted memorandum
         """
         import time
+
         start_time = time.time()
 
         config = config or ReportConfig()
@@ -207,14 +211,18 @@ class ReportGenerator:
         )
 
         # Format missing documents
-        missing_summary = self._format_missing_documents(
-            missing_doc_report
-        ) if missing_doc_report and config.include_missing_docs else "None identified."
+        missing_summary = (
+            self._format_missing_documents(missing_doc_report)
+            if missing_doc_report and config.include_missing_docs
+            else "None identified."
+        )
 
         # Format timeline
-        timeline_summary = self._format_timeline(
-            timeline
-        ) if timeline and config.include_timeline else "Not analyzed."
+        timeline_summary = (
+            self._format_timeline(timeline)
+            if timeline and config.include_timeline
+            else "Not analyzed."
+        )
 
         # Build prompt
         prompt = EXECUTIVE_SUMMARY_PROMPT.format(
@@ -243,7 +251,7 @@ class ReportGenerator:
             try:
                 response = await self.llm.acomplete(prompt)
                 summary_text = response.text
-                model_used = getattr(self.llm, 'model', 'unknown')
+                model_used = getattr(self.llm, "model", "unknown")
             except Exception as e:
                 logger.warning(f"LLM generation failed: {e}")
                 summary_text = self._generate_fallback_summary(
@@ -285,8 +293,7 @@ class ReportGenerator:
         )
 
         logger.info(
-            f"Generated executive summary: {len(summary_text)} chars "
-            f"in {generation_time:.2f}s"
+            f"Generated executive summary: {len(summary_text)} chars in {generation_time:.2f}s"
         )
 
         return summary
@@ -329,9 +336,7 @@ class ReportGenerator:
 
         lines = []
         for conflict in conflicts:
-            lines.append(
-                f"- **{conflict.conflict_type.value}**: {conflict.description}"
-            )
+            lines.append(f"- **{conflict.conflict_type.value}**: {conflict.description}")
 
         return "\n".join(lines)
 
@@ -382,6 +387,7 @@ class ReportGenerator:
 
         # Look for bullet points or numbered items
         import re
+
         patterns = [
             r"^\s*[-•]\s*(.+)$",
             r"^\s*\d+\.\s*(.+)$",
@@ -443,34 +449,40 @@ class ReportGenerator:
 
         # Critical issues
         if critical:
-            lines.extend([
-                "## Critical Issues ⚠️",
-                "",
-                "The following issues require immediate attention:",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Critical Issues ⚠️",
+                    "",
+                    "The following issues require immediate attention:",
+                    "",
+                ]
+            )
             for c in critical:
                 lines.append(f"- **{c.title}**: {c.description}")
             lines.append("")
 
         # High priority
         if high:
-            lines.extend([
-                "## Material Discrepancies",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Material Discrepancies",
+                    "",
+                ]
+            )
             for c in high:
                 lines.append(f"- **{c.title}**: {c.description}")
             lines.append("")
 
         # Missing documents
         if missing_doc_report and missing_doc_report.has_missing:
-            lines.extend([
-                "## Missing Document References",
-                "",
-                "The following referenced documents were not provided for review:",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Missing Document References",
+                    "",
+                    "The following referenced documents were not provided for review:",
+                    "",
+                ]
+            )
             for ref in missing_doc_report.missing_documents[:5]:
                 lines.append(
                     f"- {ref.reference_text} (cited in {ref.source_document_name}, p.{ref.source_page})"
@@ -479,28 +491,32 @@ class ReportGenerator:
 
         # Timeline
         if timeline and timeline.conflicts:
-            lines.extend([
-                "## Timeline Conflicts",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Timeline Conflicts",
+                    "",
+                ]
+            )
             for tc in timeline.conflicts[:3]:
                 lines.append(f"- {tc.description}")
             lines.append("")
 
         # Action items
-        lines.extend([
-            "## Recommended Actions",
-            "",
-            "- [ ] Review all CRITICAL issues before proceeding",
-            "- [ ] Request missing referenced documents from counterparty",
-            "- [ ] Clarify discrepancies with legal counsel",
-            "- [ ] Update transaction timeline if necessary",
-            "",
-            "---",
-            "",
-            "*This report was generated by automated document analysis. "
-            "All findings should be verified by qualified professionals.*",
-        ])
+        lines.extend(
+            [
+                "## Recommended Actions",
+                "",
+                "- [ ] Review all CRITICAL issues before proceeding",
+                "- [ ] Request missing referenced documents from counterparty",
+                "- [ ] Clarify discrepancies with legal counsel",
+                "- [ ] Update transaction timeline if necessary",
+                "",
+                "---",
+                "",
+                "*This report was generated by automated document analysis. "
+                "All findings should be verified by qualified professionals.*",
+            ]
+        )
 
         return "\n".join(lines)
 

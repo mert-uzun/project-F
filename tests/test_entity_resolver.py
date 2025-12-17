@@ -212,10 +212,7 @@ class TestEntityResolver:
         assert len(resolved) == 2
 
         # Check John Doe was merged
-        john_group = next(
-            (r for r in resolved if "john" in r.canonical_value.lower()),
-            None
-        )
+        john_group = next((r for r in resolved if "john" in r.canonical_value.lower()), None)
         assert john_group is not None
         assert len(john_group.source_entity_ids) == 2
 

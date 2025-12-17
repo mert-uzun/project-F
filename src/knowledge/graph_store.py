@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 
 class GraphStoreError(Exception):
     """Raised when graph store operations fail."""
+
     pass
 
 
@@ -378,7 +379,10 @@ class GraphStore:
         # Get outgoing relationships
         if direction in ("outgoing", "both"):
             for _, target, edge_data in self._graph.out_edges(node_id, data=True):
-                if relationship_type and edge_data.get("relationship_type") != relationship_type.value:
+                if (
+                    relationship_type
+                    and edge_data.get("relationship_type") != relationship_type.value
+                ):
                     continue
 
                 target_data = self._graph.nodes[target]
@@ -392,7 +396,10 @@ class GraphStore:
         # Get incoming relationships
         if direction in ("incoming", "both"):
             for source, _, edge_data in self._graph.in_edges(node_id, data=True):
-                if relationship_type and edge_data.get("relationship_type") != relationship_type.value:
+                if (
+                    relationship_type
+                    and edge_data.get("relationship_type") != relationship_type.value
+                ):
                     continue
 
                 source_data = self._graph.nodes[source]
@@ -432,7 +439,9 @@ class GraphStore:
         with open(save_path, "w") as f:
             json.dump(data, f, indent=2, default=str)
 
-        logger.info(f"Saved graph to {save_path} ({self.node_count()} nodes, {self.edge_count()} edges)")
+        logger.info(
+            f"Saved graph to {save_path} ({self.node_count()} nodes, {self.edge_count()} edges)"
+        )
 
     def _load(self) -> None:
         """Load the graph from disk."""
@@ -619,9 +628,7 @@ class GraphStore:
         Returns:
             Dict mapping document_id to list of entities
         """
-        result: dict[UUID, list[GraphNode]] = {
-            doc_id: [] for doc_id in document_ids
-        }
+        result: dict[UUID, list[GraphNode]] = {doc_id: [] for doc_id in document_ids}
 
         for node_id, node_data in self._graph.nodes(data=True):
             if "entity" not in node_data:
@@ -630,9 +637,7 @@ class GraphStore:
             entity = node_data["entity"]
 
             if entity.source_document_id in result:
-                result[entity.source_document_id].append(
-                    GraphNode(entity=entity)
-                )
+                result[entity.source_document_id].append(GraphNode(entity=entity))
 
         return result
 
@@ -640,4 +645,3 @@ class GraphStore:
         """Clear all nodes and edges."""
         self._graph.clear()
         logger.info("Cleared graph store")
-

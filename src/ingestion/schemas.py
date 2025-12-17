@@ -83,7 +83,9 @@ class ChunkMetadata(BaseModel):
     chunk_id: UUID = Field(default_factory=uuid4, description="Unique chunk ID")
     document_id: UUID = Field(..., description="Parent document ID")
     page_number: int = Field(..., ge=1, description="Page number of chunk start")
-    page_end: int | None = Field(default=None, description="Page number of chunk end if spans pages")
+    page_end: int | None = Field(
+        default=None, description="Page number of chunk end if spans pages"
+    )
     section_title: str | None = Field(default=None, description="Section title if detected")
     chunk_index: int = Field(..., ge=0, description="Index of chunk in document")
     char_start: int = Field(..., ge=0, description="Character start position in full text")
@@ -132,7 +134,9 @@ class EntityExtraction(BaseModel):
     Every assertion must have a source citation.
     """
 
-    entity_type: str = Field(..., description="Entity type (Person, Organization, Amount, Date, etc)")
+    entity_type: str = Field(
+        ..., description="Entity type (Person, Organization, Amount, Date, etc)"
+    )
     entity_value: str = Field(..., description="The actual entity value")
     normalized_value: Any = Field(default=None, description="Normalized form for comparison")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Extraction confidence")

@@ -112,7 +112,7 @@ class Entity(BaseModel):
     value: str = Field(..., description="The entity value as extracted")
     normalized_value: str | None = Field(
         default=None,
-        description="Normalized form for comparison (e.g., 'CEO' -> 'chief executive officer')"
+        description="Normalized form for comparison (e.g., 'CEO' -> 'chief executive officer')",
     )
 
     # Source citation (critical for trust)
@@ -128,8 +128,7 @@ class Entity(BaseModel):
 
     # Optional structured data
     attributes: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional structured attributes"
+        default_factory=dict, description="Additional structured attributes"
     )
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -152,8 +151,7 @@ class Relationship(BaseModel):
 
     # Relationship properties
     properties: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional relationship properties"
+        default_factory=dict, description="Additional relationship properties"
     )
 
     # Source citation
@@ -180,14 +178,12 @@ class KnowledgeGraphNode(BaseModel):
 
     # Outgoing relationships
     outgoing_relationships: list[Relationship] = Field(
-        default_factory=list,
-        description="Relationships where this entity is the source"
+        default_factory=list, description="Relationships where this entity is the source"
     )
 
     # Incoming relationships
     incoming_relationships: list[Relationship] = Field(
-        default_factory=list,
-        description="Relationships where this entity is the target"
+        default_factory=list, description="Relationships where this entity is the target"
     )
 
     @property
@@ -204,7 +200,9 @@ class ConflictCandidate(BaseModel):
     """
 
     conflict_id: UUID = Field(default_factory=uuid4)
-    conflict_type: str = Field(..., description="Type of conflict (value_mismatch, date_conflict, etc.)")
+    conflict_type: str = Field(
+        ..., description="Type of conflict (value_mismatch, date_conflict, etc.)"
+    )
 
     # The conflicting entities
     entity_a: Entity = Field(..., description="First entity")
@@ -235,7 +233,9 @@ class ExtractionResult(BaseModel):
     document_id: UUID = Field(..., description="Source document ID")
 
     entities: list[Entity] = Field(default_factory=list, description="Extracted entities")
-    relationships: list[Relationship] = Field(default_factory=list, description="Extracted relationships")
+    relationships: list[Relationship] = Field(
+        default_factory=list, description="Extracted relationships"
+    )
 
     # Metadata
     extraction_time_seconds: float = Field(default=0.0)

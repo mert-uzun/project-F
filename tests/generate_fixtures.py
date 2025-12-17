@@ -33,7 +33,7 @@ def generate_sample_pdf(output_path: Path) -> None:
     c.drawString(inch, y, "Effective Date: January 1, 2024")
     y -= 0.3 * inch
 
-    c.drawString(inch, y, "This Employment Agreement (the \"Agreement\") is entered into between:")
+    c.drawString(inch, y, 'This Employment Agreement (the "Agreement") is entered into between:')
     y -= 0.4 * inch
 
     c.setFont("Helvetica-Bold", 12)

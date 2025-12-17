@@ -25,24 +25,64 @@ DEFAULT_SIMILARITY_THRESHOLD = 0.85
 
 # Common titles to strip for matching
 TITLES = {
-    "mr", "mrs", "ms", "miss", "dr", "prof", "professor",
-    "sir", "madam", "lord", "lady", "hon", "honorable",
-    "ceo", "cfo", "coo", "cto", "cio", "president", "chairman",
-    "director", "manager", "partner", "associate", "vp",
-    "vice president", "executive", "chief", "senior", "junior",
+    "mr",
+    "mrs",
+    "ms",
+    "miss",
+    "dr",
+    "prof",
+    "professor",
+    "sir",
+    "madam",
+    "lord",
+    "lady",
+    "hon",
+    "honorable",
+    "ceo",
+    "cfo",
+    "coo",
+    "cto",
+    "cio",
+    "president",
+    "chairman",
+    "director",
+    "manager",
+    "partner",
+    "associate",
+    "vp",
+    "vice president",
+    "executive",
+    "chief",
+    "senior",
+    "junior",
 }
 
 # Common organizational suffixes
 ORG_SUFFIXES = {
-    "inc", "incorporated", "corp", "corporation", "llc", "llp",
-    "ltd", "limited", "plc", "co", "company", "group", "holdings",
-    "partners", "associates", "international", "global",
+    "inc",
+    "incorporated",
+    "corp",
+    "corporation",
+    "llc",
+    "llp",
+    "ltd",
+    "limited",
+    "plc",
+    "co",
+    "company",
+    "group",
+    "holdings",
+    "partners",
+    "associates",
+    "international",
+    "global",
 }
 
 
 # ============================================================================
 # Schemas
 # ============================================================================
+
 
 class ResolvedEntity(BaseModel):
     """An entity with resolved aliases."""
@@ -74,6 +114,7 @@ class EntityMatch(BaseModel):
 # ============================================================================
 # Entity Resolver
 # ============================================================================
+
 
 class EntityResolver:
     """
@@ -113,6 +154,7 @@ class EntityResolver:
         if self._embedding_model is None:
             try:
                 from src.utils.llm_factory import get_embedding_model
+
                 self._embedding_model = get_embedding_model()
             except Exception as e:
                 logger.warning(f"Could not load embedding model: {e}")
@@ -149,9 +191,7 @@ class EntityResolver:
             type_resolved = self._resolve_type_group(type_entities, threshold)
             resolved.extend(type_resolved)
 
-        logger.info(
-            f"Resolved {len(entities)} entities into {len(resolved)} canonical entities"
-        )
+        logger.info(f"Resolved {len(entities)} entities into {len(resolved)} canonical entities")
 
         return resolved
 
@@ -180,9 +220,7 @@ class EntityResolver:
                 if j in merged:
                     continue
 
-                score, match_type, reason = self._compute_similarity(
-                    entities[i], entities[j]
-                )
+                score, match_type, reason = self._compute_similarity(entities[i], entities[j])
 
                 if score >= threshold:
                     group.append(j)
@@ -264,7 +302,7 @@ class EntityResolver:
         name = name.lower()
 
         # Remove punctuation
-        name = re.sub(r'[^\w\s]', '', name)
+        name = re.sub(r"[^\w\s]", "", name)
 
         # Strip titles
         words = name.split()
@@ -273,7 +311,7 @@ class EntityResolver:
         # Remove organization suffixes
         words = [w for w in words if w not in ORG_SUFFIXES]
 
-        return ' '.join(words).strip()
+        return " ".join(words).strip()
 
     def _match_initials(self, name_a: str, name_b: str) -> float:
         """
@@ -349,12 +387,12 @@ class EntityResolver:
             return float(value)
 
         # Remove currency symbols and commas
-        clean = re.sub(r'[$€£¥,]', '', str(value))
+        clean = re.sub(r"[$€£¥,]", "", str(value))
 
         # Handle K/M/B suffixes
-        multipliers = {'k': 1000, 'm': 1000000, 'b': 1000000000}
+        multipliers = {"k": 1000, "m": 1000000, "b": 1000000000}
 
-        match = re.match(r'^([\d.]+)\s*([kmb])?$', clean.lower())
+        match = re.match(r"^([\d.]+)\s*([kmb])?$", clean.lower())
         if match:
             num = float(match.group(1))
             suffix = match.group(2)
@@ -391,6 +429,7 @@ class EntityResolver:
 
             # Cosine similarity
             import numpy as np
+
             dot = np.dot(emb_a, emb_b)
             norm_a = np.linalg.norm(emb_a)
             norm_b = np.linalg.norm(emb_b)
@@ -460,13 +499,15 @@ class EntityResolver:
             score, match_type, reason = self._compute_similarity(entity, candidate)
 
             if score >= threshold:
-                matches.append(EntityMatch(
-                    entity_a=entity,
-                    entity_b=candidate,
-                    similarity_score=score,
-                    match_type=match_type,
-                    reasoning=reason,
-                ))
+                matches.append(
+                    EntityMatch(
+                        entity_a=entity,
+                        entity_b=candidate,
+                        similarity_score=score,
+                        match_type=match_type,
+                        reasoning=reason,
+                    )
+                )
 
         return sorted(matches, key=lambda m: m.similarity_score, reverse=True)
 

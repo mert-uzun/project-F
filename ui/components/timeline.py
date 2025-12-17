@@ -4,7 +4,6 @@ Timeline Component.
 Chronological event display with conflict highlighting.
 """
 
-
 import streamlit as st
 
 from ui.utils.api_client import get_client
@@ -73,7 +72,8 @@ def render_timeline() -> None:
         st.subheader("⚠️ Timeline Conflicts")
         for conflict in conflicts:
             with st.container():
-                st.markdown(f"""
+                st.markdown(
+                    f"""
                 <div style="
                     border-left: 4px solid #DC3545;
                     background-color: #262730;
@@ -81,10 +81,12 @@ def render_timeline() -> None:
                     margin-bottom: 8px;
                     border-radius: 4px;
                 ">
-                    <strong style="color: #DC3545;">{conflict.get('conflict_type', 'Temporal Conflict')}</strong>
-                    <p style="color: #B0B0B0; margin: 4px 0;">{conflict.get('description', 'N/A')}</p>
+                    <strong style="color: #DC3545;">{conflict.get("conflict_type", "Temporal Conflict")}</strong>
+                    <p style="color: #B0B0B0; margin: 4px 0;">{conflict.get("description", "N/A")}</p>
                 </div>
-                """, unsafe_allow_html=True)
+                """,
+                    unsafe_allow_html=True,
+                )
 
         st.markdown("---")
 
@@ -127,7 +129,8 @@ def _render_event(event: dict, idx: int) -> None:
     col_marker, col_content = st.columns([0.1, 0.9])
 
     with col_marker:
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <div style="
             width: 12px;
             height: 12px;
@@ -135,10 +138,13 @@ def _render_event(event: dict, idx: int) -> None:
             border-radius: 50%;
             margin-top: 8px;
         "></div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     with col_content:
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <div style="
             background-color: #262730;
             padding: 12px;
@@ -146,12 +152,14 @@ def _render_event(event: dict, idx: int) -> None:
             margin-bottom: 8px;
         ">
             <div style="display: flex; justify-content: space-between;">
-                <span style="color: {color}; font-weight: bold;">{event_type.replace('_', ' ').title()}</span>
+                <span style="color: {color}; font-weight: bold;">{event_type.replace("_", " ").title()}</span>
                 <span style="color: #888;">{date_str}</span>
             </div>
-            <p style="color: #FAFAFA; margin: 8px 0 4px 0;">{event.get('description', 'No description')}</p>
+            <p style="color: #FAFAFA; margin: 8px 0 4px 0;">{event.get("description", "No description")}</p>
             <span style="color: #666; font-size: 12px;">
-                📄 {event.get('source_document', 'Unknown')} | Page {event.get('source_page', '?')}
+                📄 {event.get("source_document", "Unknown")} | Page {event.get("source_page", "?")}
             </span>
         </div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )

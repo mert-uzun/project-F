@@ -28,6 +28,7 @@ from tests.conftest import requires_llm
 # EntityExtractor Unit Tests (No LLM Required)
 # ============================================================================
 
+
 class TestEntityExtractor:
     """Tests for EntityExtractor that don't require LLM."""
 
@@ -75,9 +76,7 @@ class TestEntityExtractor:
             ),
         ]
 
-        entities = extractor._convert_entities(
-            extracted, doc_id, chunk_id, page_number=1
-        )
+        entities = extractor._convert_entities(extracted, doc_id, chunk_id, page_number=1)
 
         assert len(entities) == 4
         assert entities[0].entity_type == EntityType.PERSON
@@ -217,6 +216,7 @@ class TestEntityExtractor:
 # ExtractionOutput Schema Tests
 # ============================================================================
 
+
 class TestExtractionSchemas:
     """Tests for extraction-related schemas."""
 
@@ -292,6 +292,7 @@ class TestExtractionSchemas:
 # ============================================================================
 # Integration Tests (Require LLM)
 # ============================================================================
+
 
 class TestEntityExtractorIntegration:
     """Integration tests that require real LLM calls."""
@@ -376,10 +377,7 @@ class TestEntityExtractorIntegration:
             ),
         )
 
-        result = await extractor.extract(
-            chunk,
-            focus_areas=["salary", "equity", "percentage"]
-        )
+        result = await extractor.extract(chunk, focus_areas=["salary", "equity", "percentage"])
 
         assert isinstance(result, ExtractionResult)
         assert len(result.errors) == 0

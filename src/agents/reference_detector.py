@@ -30,30 +30,24 @@ REFERENCE_PATTERNS = [
         r"(?:pursuant to|as defined in|per|under|in accordance with|"
         r"subject to|referenced in|described in|set forth in)\s+"
         r"(?:the\s+)?([A-Z][A-Za-z\s]+(?:Agreement|Contract|Letter|Plan|Policy))",
-        "agreement"
+        "agreement",
     ),
     # "Exhibit A", "Schedule 1", "Appendix B-1"
-    (
-        r"(?:Exhibit|Schedule|Appendix|Annex|Attachment)\s+([A-Z0-9][-A-Z0-9]*)",
-        "exhibit"
-    ),
+    (r"(?:Exhibit|Schedule|Appendix|Annex|Attachment)\s+([A-Z0-9][-A-Z0-9]*)", "exhibit"),
     # "Section 4.2 of the Operating Agreement"
     (
         r"(?:Section|Article|Clause)\s+(\d+(?:\.\d+)*)\s+of\s+"
         r"(?:the\s+)?([A-Z][A-Za-z\s]+(?:Agreement|Contract))",
-        "section"
+        "section",
     ),
     # "Side Letter dated January 1, 2024"
     (
         r"(Side Letter|Amendment|Addendum|Supplement)\s+"
         r"(?:dated\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})?",
-        "amendment"
+        "amendment",
     ),
     # "the Stock Option Plan"
-    (
-        r"the\s+([A-Z][A-Za-z\s]+(?:Plan|Agreement|Schedule|Policy))",
-        "plan"
-    ),
+    (r"the\s+([A-Z][A-Za-z\s]+(?:Plan|Agreement|Schedule|Policy))", "plan"),
 ]
 
 
@@ -73,6 +67,7 @@ class ReferenceType(str, Enum):
 # Schemas
 # ============================================================================
 
+
 class DocumentReference(BaseModel):
     """A reference to another document found in text."""
 
@@ -91,8 +86,7 @@ class DocumentReference(BaseModel):
     # Match status
     is_uploaded: bool = Field(default=False, description="Whether this doc was uploaded")
     matched_document_id: UUID | None = Field(
-        default=None,
-        description="ID of matched uploaded document"
+        default=None, description="ID of matched uploaded document"
     )
     matched_document_name: str | None = None
 
@@ -150,6 +144,7 @@ class MissingDocumentReport(BaseModel):
 # Reference Detector
 # ============================================================================
 
+
 class ReferenceDetector:
     """
     Detect references to external documents.
@@ -183,8 +178,7 @@ class ReferenceDetector:
 
         # Compile patterns
         self._compiled_patterns = [
-            (re.compile(pattern, re.IGNORECASE), ref_type)
-            for pattern, ref_type in self.patterns
+            (re.compile(pattern, re.IGNORECASE), ref_type) for pattern, ref_type in self.patterns
         ]
 
     def extract_references(
@@ -235,16 +229,18 @@ class ReferenceDetector:
                 end = min(len(text), match.end() + 50)
                 context = text[start:end]
 
-                references.append(DocumentReference(
-                    reference_text=ref_text,
-                    reference_type=ReferenceType(ref_type),
-                    normalized_name=normalized,
-                    source_document_id=document_id,
-                    source_document_name=document_name,
-                    source_page=chunk.metadata.page_number,
-                    source_chunk_id=chunk.metadata.chunk_id,
-                    context=f"...{context}...",
-                ))
+                references.append(
+                    DocumentReference(
+                        reference_text=ref_text,
+                        reference_type=ReferenceType(ref_type),
+                        normalized_name=normalized,
+                        source_document_id=document_id,
+                        source_document_name=document_name,
+                        source_page=chunk.metadata.page_number,
+                        source_chunk_id=chunk.metadata.chunk_id,
+                        context=f"...{context}...",
+                    )
+                )
 
         return references
 
@@ -292,15 +288,17 @@ class ReferenceDetector:
                 end = min(len(text), match.end() + 50)
                 context = text[start:end]
 
-                references.append(DocumentReference(
-                    reference_text=ref_text,
-                    reference_type=ReferenceType(ref_type),
-                    normalized_name=normalized,
-                    source_document_id=document_id,
-                    source_document_name=document_name,
-                    source_page=page_number,
-                    context=f"...{context}...",
-                ))
+                references.append(
+                    DocumentReference(
+                        reference_text=ref_text,
+                        reference_type=ReferenceType(ref_type),
+                        normalized_name=normalized,
+                        source_document_id=document_id,
+                        source_document_name=document_name,
+                        source_page=page_number,
+                        context=f"...{context}...",
+                    )
+                )
 
         return references
 
@@ -397,10 +395,7 @@ class ReferenceDetector:
 
         # Without common words
         without_common = re.sub(
-            r"\b(the|a|an|of|for|and|or)\b",
-            "",
-            base,
-            flags=re.IGNORECASE
+            r"\b(the|a|an|of|for|and|or)\b", "", base, flags=re.IGNORECASE
         ).strip()
         normalizations.append(without_common)
 

@@ -33,6 +33,7 @@ logger = get_logger(__name__)
 
 class JudgeError(Exception):
     """Raised when verification fails."""
+
     pass
 
 
@@ -96,6 +97,7 @@ class VerificationOutput(BaseModel):
 # Judge Agent
 # ============================================================================
 
+
 class JudgeAgent:
     """
     Agent that verifies conflicts and generates the final report.
@@ -131,6 +133,7 @@ class JudgeAgent:
         """Get LLM instance."""
         if self._llm is None:
             from src.utils.llm_factory import get_llm
+
             self._llm = get_llm()
         return self._llm
 
@@ -177,21 +180,21 @@ class JudgeAgent:
                 rejected_count += 1
 
         logger.info(
-            f"Verification complete: {len(verified_conflicts)} verified, "
-            f"{rejected_count} rejected"
+            f"Verification complete: {len(verified_conflicts)} verified, {rejected_count} rejected"
         )
 
         # Generate red flags from verified conflicts
         red_flags = [
-            self._create_red_flag(conflict, result)
-            for conflict, result in verified_conflicts
+            self._create_red_flag(conflict, result) for conflict, result in verified_conflicts
         ]
 
         # Sort by severity and priority
-        red_flags.sort(key=lambda f: (
-            self._severity_order(f.conflict.severity),
-            f.priority,
-        ))
+        red_flags.sort(
+            key=lambda f: (
+                self._severity_order(f.conflict.severity),
+                f.priority,
+            )
+        )
 
         # Create the report
         report = ConflictReport(
@@ -310,9 +313,15 @@ class JudgeAgent:
                 # Skip if it's the same as original context
                 if result.content not in conflict.evidence_a.citation.excerpt:
                     if result.content not in conflict.evidence_b.citation.excerpt:
-                        additional_chunks.append(f"[Page {result.metadata.get('page_number', '?')}]: {result.content[:300]}")
+                        additional_chunks.append(
+                            f"[Page {result.metadata.get('page_number', '?')}]: {result.content[:300]}"
+                        )
 
-        return "\n\n".join(additional_chunks[:3]) if additional_chunks else "No additional context found."
+        return (
+            "\n\n".join(additional_chunks[:3])
+            if additional_chunks
+            else "No additional context found."
+        )
 
     def _create_red_flag(
         self,
@@ -377,6 +386,7 @@ class JudgeAgent:
 # Convenience Function
 # ============================================================================
 
+
 async def detect_and_verify(
     document_ids: list[UUID],
     document_names: list[str],
@@ -412,10 +422,6 @@ async def detect_and_verify(
 
     # Run Judge
     judge = JudgeAgent(vector_store, graph_store)
-    report = await judge.verify_and_report(
-        conflicts,
-        document_ids,
-        document_names
-    )
+    report = await judge.verify_and_report(conflicts, document_ids, document_names)
 
     return report

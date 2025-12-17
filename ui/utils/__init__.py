@@ -32,4 +32,3 @@ __all__ = [
     "format_metric_card",
     "format_log_line",
 ]
-

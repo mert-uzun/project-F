@@ -15,6 +15,7 @@ from tests.conftest import requires_llm, requires_ollama
 # LLM Creation Tests
 # ============================================================================
 
+
 class TestLLMFactory:
     """Tests for LLM factory functions."""
 
@@ -25,8 +26,8 @@ class TestLLMFactory:
         settings = get_settings()
 
         assert settings is not None
-        assert hasattr(settings, 'llm_backend')
-        assert hasattr(settings, 'embedding_backend')
+        assert hasattr(settings, "llm_backend")
+        assert hasattr(settings, "embedding_backend")
 
     @requires_ollama()
     def test_create_ollama_llm(self) -> None:
@@ -41,7 +42,7 @@ class TestLLMFactory:
 
         assert llm is not None
         # Validate it has expected methods
-        assert hasattr(llm, 'complete') or hasattr(llm, 'acomplete')
+        assert hasattr(llm, "complete") or hasattr(llm, "acomplete")
 
     def test_create_openai_llm_with_key(self) -> None:
         """Test OpenAI LLM creation when API key is set."""
@@ -63,7 +64,7 @@ class TestLLMFactory:
         llm = get_llm()
 
         assert llm is not None
-        assert hasattr(llm, 'complete') or hasattr(llm, 'acomplete')
+        assert hasattr(llm, "complete") or hasattr(llm, "acomplete")
 
     @requires_llm()
     def test_get_llm_default(self) -> None:
@@ -80,6 +81,7 @@ class TestLLMFactory:
 # Embedding Model Tests
 # ============================================================================
 
+
 class TestEmbeddingFactory:
     """Tests for embedding model creation."""
 
@@ -94,7 +96,7 @@ class TestEmbeddingFactory:
 
         assert embedding is not None
         # Should have embedding method
-        assert hasattr(embedding, 'get_text_embedding') or hasattr(embedding, '_get_text_embedding')
+        assert hasattr(embedding, "get_text_embedding") or hasattr(embedding, "_get_text_embedding")
 
     def test_embedding_produces_vectors(self) -> None:
         """Test that embedding model produces actual vectors."""
@@ -107,9 +109,9 @@ class TestEmbeddingFactory:
         text = "This is a test sentence for embedding."
 
         try:
-            if hasattr(embedding, 'get_text_embedding'):
+            if hasattr(embedding, "get_text_embedding"):
                 vector = embedding.get_text_embedding(text)
-            elif hasattr(embedding, '_get_text_embedding'):
+            elif hasattr(embedding, "_get_text_embedding"):
                 vector = embedding._get_text_embedding(text)
             else:
                 pytest.skip("Embedding model doesn't have expected methods")
@@ -134,6 +136,7 @@ class TestEmbeddingFactory:
 # Integration Tests
 # ============================================================================
 
+
 class TestLLMIntegration:
     """Integration tests requiring actual LLM calls."""
 
@@ -150,7 +153,7 @@ class TestLLMIntegration:
         response = await llm.acomplete("What is 2 + 2? Answer with just the number.")
 
         assert response is not None
-        assert hasattr(response, 'text')
+        assert hasattr(response, "text")
         assert len(response.text) > 0
         # Should contain "4" somewhere
         assert "4" in response.text

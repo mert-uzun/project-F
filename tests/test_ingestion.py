@@ -21,6 +21,7 @@ from src.ingestion.schemas import (
 # SemanticChunker Tests
 # ============================================================================
 
+
 class TestSemanticChunker:
     """Tests for SemanticChunker."""
 
@@ -169,6 +170,7 @@ class TestSemanticChunker:
 # ============================================================================
 # Schema Tests
 # ============================================================================
+
 
 class TestParsedTable:
     """Tests for ParsedTable schema."""

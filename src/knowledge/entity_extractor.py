@@ -26,6 +26,7 @@ logger = get_logger(__name__)
 
 class EntityExtractionError(Exception):
     """Raised when entity extraction fails."""
+
     pass
 
 
@@ -33,12 +34,18 @@ class EntityExtractionError(Exception):
 # Pydantic Models for Structured LLM Output
 # ============================================================================
 
+
 class ExtractedEntity(BaseModel):
     """Schema for LLM-extracted entity."""
 
-    entity_type: str = Field(..., description="Type: person, organization, monetary_amount, percentage, date, clause, etc.")
+    entity_type: str = Field(
+        ...,
+        description="Type: person, organization, monetary_amount, percentage, date, clause, etc.",
+    )
     value: str = Field(..., description="The entity value as it appears in the text")
-    normalized_value: str | None = Field(None, description="Normalized form (e.g., '$100,000' -> '100000')")
+    normalized_value: str | None = Field(
+        None, description="Normalized form (e.g., '$100,000' -> '100000')"
+    )
     confidence: float = Field(0.9, ge=0.0, le=1.0, description="Extraction confidence")
     context: str = Field(..., description="Surrounding text context (1-2 sentences)")
 
@@ -116,6 +123,7 @@ Return entities and relationships as JSON.
 # Entity Extractor
 # ============================================================================
 
+
 class EntityExtractor:
     """
     LLM-based entity and relationship extractor.
@@ -152,6 +160,7 @@ class EntityExtractor:
         """Get the LLM instance."""
         if self._llm is None:
             from src.utils.llm_factory import get_llm
+
             self._llm = get_llm()
         return self._llm
 
@@ -335,17 +344,19 @@ class EntityExtractor:
             except ValueError:
                 entity_type = EntityType.OTHER
 
-            entities.append(Entity(
-                entity_type=entity_type,
-                value=ext.value,
-                normalized_value=ext.normalized_value,
-                source_document_id=document_id,
-                source_chunk_id=chunk_id,
-                source_page=page_number,
-                source_text=ext.context,
-                confidence=ext.confidence,
-                extraction_method="llm",
-            ))
+            entities.append(
+                Entity(
+                    entity_type=entity_type,
+                    value=ext.value,
+                    normalized_value=ext.normalized_value,
+                    source_document_id=document_id,
+                    source_chunk_id=chunk_id,
+                    source_page=page_number,
+                    source_text=ext.context,
+                    confidence=ext.confidence,
+                    extraction_method="llm",
+                )
+            )
 
         return entities
 
@@ -380,16 +391,18 @@ class EntityExtractor:
             except ValueError:
                 rel_type = RelationshipType.REFERENCES
 
-            relationships.append(Relationship(
-                relationship_type=rel_type,
-                source_entity_id=source.entity_id,
-                target_entity_id=target.entity_id,
-                source_document_id=document_id,
-                source_chunk_id=chunk_id,
-                source_page=page_number,
-                source_text=ext.context,
-                confidence=ext.confidence,
-            ))
+            relationships.append(
+                Relationship(
+                    relationship_type=rel_type,
+                    source_entity_id=source.entity_id,
+                    target_entity_id=target.entity_id,
+                    source_document_id=document_id,
+                    source_chunk_id=chunk_id,
+                    source_page=page_number,
+                    source_text=ext.context,
+                    confidence=ext.confidence,
+                )
+            )
 
         return relationships
 
@@ -397,6 +410,7 @@ class EntityExtractor:
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 async def extract_from_chunks(
     chunks: list[DocumentChunk],

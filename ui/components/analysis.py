@@ -29,7 +29,8 @@ def render_analysis() -> None:
     st.subheader("📋 Selected Documents")
 
     selected_docs = [
-        doc for doc in st.session_state.uploaded_documents
+        doc
+        for doc in st.session_state.uploaded_documents
         if doc.get("id") in st.session_state.selected_document_ids
     ]
 
@@ -132,7 +133,7 @@ def _execute_analysis(include_timeline: bool, resolve_entities: bool) -> None:
                 add_log("ALERT", f"❌ Analysis failed: {e}")
                 st.error(f"Analysis failed: {e}")
 
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.session_state.analysis_running = False
     st.rerun()
@@ -148,36 +149,48 @@ def _render_results_summary() -> None:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("""
+        st.markdown(
+            """
         <div class="metric-card">
             <div class="metric-value">{}</div>
             <div class="metric-label">Total Conflicts</div>
         </div>
-        """.format(results.get("conflict_count", 0)), unsafe_allow_html=True)
+        """.format(results.get("conflict_count", 0)),
+            unsafe_allow_html=True,
+        )
 
     with col2:
-        st.markdown("""
+        st.markdown(
+            """
         <div class="metric-card">
             <div class="metric-value" style="color: #DC3545;">{}</div>
             <div class="metric-label">Critical</div>
         </div>
-        """.format(results.get("critical_conflicts", 0)), unsafe_allow_html=True)
+        """.format(results.get("critical_conflicts", 0)),
+            unsafe_allow_html=True,
+        )
 
     with col3:
-        st.markdown("""
+        st.markdown(
+            """
         <div class="metric-card">
             <div class="metric-value">{}</div>
             <div class="metric-label">Entities</div>
         </div>
-        """.format(results.get("total_entities", 0)), unsafe_allow_html=True)
+        """.format(results.get("total_entities", 0)),
+            unsafe_allow_html=True,
+        )
 
     with col4:
-        st.markdown("""
+        st.markdown(
+            """
         <div class="metric-card">
             <div class="metric-value">{:.1f}s</div>
             <div class="metric-label">Analysis Time</div>
         </div>
-        """.format(results.get("analysis_time_seconds", 0)), unsafe_allow_html=True)
+        """.format(results.get("analysis_time_seconds", 0)),
+            unsafe_allow_html=True,
+        )
 
     st.markdown("---")
 

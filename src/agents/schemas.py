@@ -45,18 +45,18 @@ class ConflictType(str, Enum):
 class ConflictSeverity(str, Enum):
     """Severity levels for conflicts."""
 
-    LOW = "low"           # Minor discrepancy, likely formatting
-    MEDIUM = "medium"     # Notable difference, needs review
-    HIGH = "high"         # Significant conflict, potential risk
-    CRITICAL = "critical" # Major contradiction, deal-breaker
+    LOW = "low"  # Minor discrepancy, likely formatting
+    MEDIUM = "medium"  # Notable difference, needs review
+    HIGH = "high"  # Significant conflict, potential risk
+    CRITICAL = "critical"  # Major contradiction, deal-breaker
 
 
 class ConflictStatus(str, Enum):
     """Status of a conflict in the verification pipeline."""
 
-    DETECTED = "detected"      # Just found by Comparator
-    VERIFIED = "verified"      # Confirmed by Judge as real
-    REJECTED = "rejected"      # Rejected by Judge as false positive
+    DETECTED = "detected"  # Just found by Comparator
+    VERIFIED = "verified"  # Confirmed by Judge as real
+    REJECTED = "rejected"  # Rejected by Judge as false positive
     NEEDS_REVIEW = "needs_review"  # Judge uncertain, needs human
 
 
@@ -209,13 +209,12 @@ class ComparisonQuery(BaseModel):
     # What to focus on
     focus_areas: list[str] = Field(
         default_factory=lambda: ["salary", "equity", "dates", "parties"],
-        description="Areas to focus comparison on"
+        description="Areas to focus comparison on",
     )
 
     # Specific query
     specific_query: str | None = Field(
-        None,
-        description="Specific thing to look for, e.g., 'Compare CEO compensation'"
+        None, description="Specific thing to look for, e.g., 'Compare CEO compensation'"
     )
 
     # Thresholds

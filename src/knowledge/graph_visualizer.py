@@ -32,6 +32,7 @@ logger = get_logger(__name__)
 # Local definition to avoid circular import
 class _Severity(str, Enum):
     """Conflict severity levels (local copy to avoid circular import)."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -46,9 +47,9 @@ class _Severity(str, Enum):
 # These draw immediate attention in order of priority
 SEVERITY_COLORS = {
     _Severity.CRITICAL: "#DC2626",  # Vivid red - STOP, urgent
-    _Severity.HIGH: "#EA580C",      # Deep orange - serious warning
-    _Severity.MEDIUM: "#CA8A04",    # Amber/gold - notable, review
-    _Severity.LOW: "#65A30D",       # Olive green - minor, low priority
+    _Severity.HIGH: "#EA580C",  # Deep orange - serious warning
+    _Severity.MEDIUM: "#CA8A04",  # Amber/gold - notable, review
+    _Severity.LOW: "#65A30D",  # Olive green - minor, low priority
 }
 
 # Entity type colors - Professional, high contrast
@@ -56,25 +57,20 @@ SEVERITY_COLORS = {
 ENTITY_COLORS = {
     # People - Professional blue (trust, human element)
     EntityType.PERSON: "#0284C7",
-
     # Organizations - Navy/dark blue (corporate, stable, reliable)
     EntityType.ORGANIZATION: "#1E3A5F",
-
     # Financial - Bronze/gold (money, value, importance)
     EntityType.MONETARY_AMOUNT: "#B45309",
     EntityType.SALARY: "#B45309",
     EntityType.EQUITY: "#B45309",
     EntityType.PERCENTAGE: "#D97706",
-
     # Dates/Time - Deep purple (milestones, deadlines)
     EntityType.DATE: "#6B21A8",
     EntityType.DURATION: "#7C3AED",
-
     # Legal/Terms - Slate gray (neutral, supporting)
     EntityType.TERM: "#475569",
     EntityType.CLAUSE: "#475569",
     EntityType.ROLE: "#64748B",
-
     # General - Light gray
     EntityType.OTHER: "#94A3B8",
 }
@@ -83,22 +79,18 @@ ENTITY_COLORS = {
 RELATIONSHIP_COLORS = {
     # Conflict - RED, must stand out
     RelationshipType.CONFLICTS_WITH: "#DC2626",
-
     # Financial relationships - Gold (money)
     RelationshipType.HAS_SALARY: "#B45309",
     RelationshipType.HAS_EQUITY: "#B45309",
     RelationshipType.OWNS: "#B45309",
-
     # Organizational - Blue (hierarchy)
     RelationshipType.EMPLOYED_BY: "#0284C7",
     RelationshipType.REPORTS_TO: "#0284C7",
     RelationshipType.HAS_ROLE: "#0284C7",
-
     # References - Light gray (supporting)
     RelationshipType.REFERENCES: "#94A3B8",
     RelationshipType.CONTAINS: "#94A3B8",
     RelationshipType.HAS_SECTION: "#94A3B8",
-
     # Comparison - Amber
     RelationshipType.SAME_AS: "#CA8A04",
     RelationshipType.SUPERSEDES: "#CA8A04",
@@ -121,6 +113,7 @@ NORMAL_EDGE_STYLE = {
 # ============================================================================
 # Graph Visualizer
 # ============================================================================
+
 
 class GraphVisualizer:
     """
@@ -401,7 +394,7 @@ class GraphVisualizer:
         """Truncate label for display."""
         if len(value) <= max_length:
             return value
-        return value[:max_length - 3] + "..."
+        return value[: max_length - 3] + "..."
 
     def _inject_legend(self, html_path: Path) -> None:
         """Inject a color legend into the HTML."""
@@ -463,10 +456,7 @@ class GraphVisualizer:
 
     def get_edge_color(self, relationship: Relationship) -> str:
         """Get color for a relationship edge."""
-        return RELATIONSHIP_COLORS.get(
-            relationship.relationship_type,
-            NORMAL_EDGE_STYLE["color"]
-        )
+        return RELATIONSHIP_COLORS.get(relationship.relationship_type, NORMAL_EDGE_STYLE["color"])
 
 
 def visualize_knowledge_graph(

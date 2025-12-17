@@ -14,16 +14,19 @@ from fastapi.testclient import TestClient
 # Client Fixture
 # ============================================================================
 
+
 @pytest.fixture
 def client():
     """Create FastAPI TestClient."""
     from app.main import app
+
     return TestClient(app)
 
 
 # ============================================================================
 # Health & Config Endpoints
 # ============================================================================
+
 
 class TestHealthEndpoints:
     """Tests for health and config endpoints."""
@@ -51,6 +54,7 @@ class TestHealthEndpoints:
 # ============================================================================
 # Ingest Endpoint Tests
 # ============================================================================
+
 
 class TestIngestEndpoint:
     """Tests for /ingest endpoint."""
@@ -87,6 +91,7 @@ class TestIngestEndpoint:
 # ============================================================================
 # Detect Conflicts Endpoint Tests
 # ============================================================================
+
 
 class TestDetectConflictsEndpoint:
     """Tests for /detect-conflicts endpoint."""
@@ -135,6 +140,7 @@ class TestDetectConflictsEndpoint:
 # Error Handling Tests
 # ============================================================================
 
+
 class TestErrorHandling:
     """Tests for error handling across endpoints."""
 
@@ -165,6 +171,7 @@ class TestErrorHandling:
 # ============================================================================
 # Response Format Tests
 # ============================================================================
+
 
 class TestResponseFormats:
     """Tests for API response formats."""

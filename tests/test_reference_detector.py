@@ -40,7 +40,7 @@ class TestReferenceDetector:
                 chunk_index=0,
                 char_start=0,
                 char_end=60,
-            )
+            ),
         )
 
         doc_id = uuid4()
@@ -60,7 +60,7 @@ class TestReferenceDetector:
                 chunk_index=0,
                 char_start=0,
                 char_end=55,
-            )
+            ),
         )
 
         doc_id = uuid4()
@@ -81,17 +81,14 @@ class TestReferenceDetector:
                 chunk_index=0,
                 char_start=0,
                 char_end=80,
-            )
+            ),
         )
 
         doc_id = uuid4()
         refs = detector.extract_references(chunk, doc_id, "Side Letter.pdf")
 
         assert len(refs) >= 1
-        agreement_ref = next(
-            (r for r in refs if "employment" in r.normalized_name.lower()),
-            None
-        )
+        agreement_ref = next((r for r in refs if "employment" in r.normalized_name.lower()), None)
         assert agreement_ref is not None
         assert agreement_ref.reference_type == ReferenceType.AGREEMENT
 
@@ -106,17 +103,14 @@ class TestReferenceDetector:
                 chunk_index=0,
                 char_start=0,
                 char_end=55,
-            )
+            ),
         )
 
         doc_id = uuid4()
         refs = detector.extract_references(chunk, doc_id, "Main Contract.pdf")
 
         assert len(refs) >= 1
-        side_letter = next(
-            (r for r in refs if "side letter" in r.reference_text.lower()),
-            None
-        )
+        side_letter = next((r for r in refs if "side letter" in r.reference_text.lower()), None)
         assert side_letter is not None
 
     def test_extract_multiple_references(self, detector) -> None:
@@ -133,7 +127,7 @@ class TestReferenceDetector:
                 chunk_index=0,
                 char_start=0,
                 char_end=150,
-            )
+            ),
         )
 
         doc_id = uuid4()
@@ -152,7 +146,7 @@ class TestReferenceDetector:
                 chunk_index=0,
                 char_start=0,
                 char_end=65,
-            )
+            ),
         )
 
         doc_id = uuid4()
@@ -196,9 +190,7 @@ class TestMissingDocumentDetection:
         ]
 
         # Only Exhibit A was uploaded
-        uploaded = [
-            {"document_id": uuid4(), "filename": "Exhibit_A.pdf"}
-        ]
+        uploaded = [{"document_id": uuid4(), "filename": "Exhibit_A.pdf"}]
 
         report = detector.find_missing_documents(references, uploaded)
 
@@ -221,9 +213,7 @@ class TestMissingDocumentDetection:
             ),
         ]
 
-        uploaded = [
-            {"document_id": uuid4(), "filename": "Exhibit A.pdf"}
-        ]
+        uploaded = [{"document_id": uuid4(), "filename": "Exhibit A.pdf"}]
 
         report = detector.find_missing_documents(references, uploaded)
 
@@ -262,9 +252,7 @@ class TestPatternMatching:
     def test_pursuant_to_pattern(self, detector) -> None:
         """Test 'pursuant to' pattern."""
         text = "pursuant to the Operating Agreement"
-        refs = detector.extract_references_from_text(
-            text, uuid4(), "Doc.pdf", page_number=1
-        )
+        refs = detector.extract_references_from_text(text, uuid4(), "Doc.pdf", page_number=1)
 
         assert len(refs) >= 1
         assert any("operating agreement" in r.normalized_name.lower() for r in refs)
@@ -272,18 +260,14 @@ class TestPatternMatching:
     def test_as_defined_in_pattern(self, detector) -> None:
         """Test 'as defined in' pattern."""
         text = "as defined in the Stock Option Plan"
-        refs = detector.extract_references_from_text(
-            text, uuid4(), "Doc.pdf", page_number=1
-        )
+        refs = detector.extract_references_from_text(text, uuid4(), "Doc.pdf", page_number=1)
 
         assert len(refs) >= 1
 
     def test_section_reference_pattern(self, detector) -> None:
         """Test Section X of Y pattern."""
         text = "Section 4.2 of the Partnership Agreement"
-        refs = detector.extract_references_from_text(
-            text, uuid4(), "Doc.pdf", page_number=1
-        )
+        refs = detector.extract_references_from_text(text, uuid4(), "Doc.pdf", page_number=1)
 
         # Should extract section reference
         assert len(refs) >= 1
@@ -291,9 +275,7 @@ class TestPatternMatching:
     def test_exhibit_with_number(self, detector) -> None:
         """Test Exhibit with number like B-1."""
         text = "See Exhibit B-1 for details"
-        refs = detector.extract_references_from_text(
-            text, uuid4(), "Doc.pdf", page_number=1
-        )
+        refs = detector.extract_references_from_text(text, uuid4(), "Doc.pdf", page_number=1)
 
         assert len(refs) >= 1
         assert any("b-1" in r.normalized_name.lower() for r in refs)

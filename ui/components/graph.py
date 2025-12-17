@@ -103,10 +103,7 @@ def render_graph() -> None:
             st.metric("Edges", edge_count)
 
         with col3:
-            conflict_nodes = [
-                n for n in graph_data.get("nodes", [])
-                if n.get("is_conflict")
-            ]
+            conflict_nodes = [n for n in graph_data.get("nodes", []) if n.get("is_conflict")]
             st.metric("Conflict Nodes", len(conflict_nodes))
 
     except Exception:

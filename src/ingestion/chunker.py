@@ -180,9 +180,7 @@ class SemanticChunker:
             char_position = char_end
 
             # Estimate page number from character position
-            page_number = self._estimate_page_number(
-                char_start, len(text), doc_metadata.num_pages
-            )
+            page_number = self._estimate_page_number(char_start, len(text), doc_metadata.num_pages)
 
             # Detect section titles
             section_title = self._detect_section_title(chunk_text)
@@ -201,9 +199,7 @@ class SemanticChunker:
 
         return chunks
 
-    def _remove_tables_from_text(
-        self, text: str, tables: list[ParsedTable]
-    ) -> str:
+    def _remove_tables_from_text(self, text: str, tables: list[ParsedTable]) -> str:
         """Remove table markdown from text to avoid duplication."""
         result = text
 
@@ -247,9 +243,7 @@ class SemanticChunker:
 
         return chunks
 
-    def _estimate_page_number(
-        self, char_position: int, total_chars: int, num_pages: int
-    ) -> int:
+    def _estimate_page_number(self, char_position: int, total_chars: int, num_pages: int) -> int:
         """Estimate page number from character position."""
         if total_chars == 0 or num_pages == 0:
             return 1

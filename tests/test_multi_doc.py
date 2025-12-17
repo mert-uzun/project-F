@@ -33,7 +33,7 @@ class TestDocumentSet:
             document_names={
                 str(doc_ids[0]): "Contract A.pdf",
                 str(doc_ids[1]): "Contract B.pdf",
-            }
+            },
         )
 
         assert doc_set.count == 2
@@ -71,7 +71,7 @@ class TestEntityVariation:
                     page_number=1,
                     chunk_id=uuid4(),
                 ),
-            ]
+            ],
         )
 
         assert not variation.is_conflict
@@ -97,7 +97,7 @@ class TestEntityVariation:
                     page_number=1,
                     chunk_id=uuid4(),
                 ),
-            ]
+            ],
         )
 
         assert variation.is_conflict
@@ -133,7 +133,7 @@ class TestEntityVariation:
                     page_number=1,
                     chunk_id=uuid4(),
                 ),
-            ]
+            ],
         )
 
         unique = variation.unique_values
@@ -173,7 +173,7 @@ class TestEntityVariation:
                     page_number=1,
                     chunk_id=uuid4(),
                 ),
-            ]
+            ],
         )
 
         assert variation.document_count == 2
@@ -239,7 +239,7 @@ class TestMultiDocReport:
                     title="Low Conflict",
                     description="Low",
                 ),
-            ]
+            ],
         )
 
         assert len(report.critical_conflicts) == 1
@@ -303,10 +303,8 @@ class TestMultiDocAnalyzer:
     def vector_store(self, tmp_path) -> VectorStore:
         """Create temp vector store."""
         from src.knowledge.vector_store import VectorStoreConfig
-        config = VectorStoreConfig(
-            persist_directory=tmp_path / "chromadb",
-            collection_name="test"
-        )
+
+        config = VectorStoreConfig(persist_directory=tmp_path / "chromadb", collection_name="test")
         return VectorStore(config)
 
     @pytest.mark.asyncio
@@ -323,7 +321,7 @@ class TestMultiDocAnalyzer:
             document_names={
                 str(graph_store._doc_a): "Contract A",
                 str(graph_store._doc_b): "Contract B",
-            }
+            },
         )
 
         report = await analyzer.analyze(doc_set, resolve_entities=False)

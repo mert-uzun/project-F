@@ -23,6 +23,7 @@ logger = get_logger(__name__)
 # Event Type Detection
 # ============================================================================
 
+
 class EventType(str, Enum):
     """Types of timeline events."""
 
@@ -102,6 +103,7 @@ EVENT_PATTERNS = {
 # ============================================================================
 # Schemas
 # ============================================================================
+
 
 class TimelineEvent(BaseModel):
     """An event on the timeline."""
@@ -184,7 +186,8 @@ class Timeline(BaseModel):
     def get_events_for_entity(self, entity_value: str) -> list[TimelineEvent]:
         """Get all events involving an entity."""
         return [
-            e for e in self.events
+            e
+            for e in self.events
             if entity_value.lower() in [v.lower() for v in e.related_entity_values]
         ]
 
@@ -192,6 +195,7 @@ class Timeline(BaseModel):
 # ============================================================================
 # Timeline Builder
 # ============================================================================
+
 
 class TimelineBuilder:
     """
@@ -230,9 +234,7 @@ class TimelineBuilder:
         # Compile event patterns
         self._event_patterns: dict[EventType, list[re.Pattern]] = {}
         for event_type, patterns in EVENT_PATTERNS.items():
-            self._event_patterns[event_type] = [
-                re.compile(p, re.IGNORECASE) for p in patterns
-            ]
+            self._event_patterns[event_type] = [re.compile(p, re.IGNORECASE) for p in patterns]
 
     def build_timeline(
         self,
@@ -276,8 +278,12 @@ class TimelineBuilder:
                     max_nodes=10,
                 )
 
-                related_ids = [n.entity.entity_id for n in neighborhood.nodes if n.id != str(entity.entity_id)]
-                related_values = [n.entity.value for n in neighborhood.nodes if n.id != str(entity.entity_id)]
+                related_ids = [
+                    n.entity.entity_id for n in neighborhood.nodes if n.id != str(entity.entity_id)
+                ]
+                related_values = [
+                    n.entity.value for n in neighborhood.nodes if n.id != str(entity.entity_id)
+                ]
 
                 event = TimelineEvent(
                     event_date=parsed_date,
@@ -313,8 +319,7 @@ class TimelineBuilder:
         timeline.conflicts = self.detect_timeline_conflicts(timeline)
 
         logger.info(
-            f"Built timeline: {timeline.event_count} events, "
-            f"{timeline.conflict_count} conflicts"
+            f"Built timeline: {timeline.event_count} events, {timeline.conflict_count} conflicts"
         )
 
         return timeline
@@ -337,7 +342,7 @@ class TimelineBuilder:
 
         # 1. Check for impossible sequences within same document
         for i, event_a in enumerate(events):
-            for event_b in events[i + 1:]:
+            for event_b in events[i + 1 :]:
                 # Only compare within same document
                 if event_a.source_document_id != event_b.source_document_id:
                     continue
@@ -376,8 +381,10 @@ class TimelineBuilder:
     ) -> TimelineConflict | None:
         """Check if two events have an impossible sequence."""
         # Termination before start
-        if event_a.event_type == EventType.EMPLOYMENT_END and \
-           event_b.event_type == EventType.EMPLOYMENT_START:
+        if (
+            event_a.event_type == EventType.EMPLOYMENT_END
+            and event_b.event_type == EventType.EMPLOYMENT_START
+        ):
             return TimelineConflict(
                 event_a=event_a,
                 event_b=event_b,
@@ -390,8 +397,10 @@ class TimelineBuilder:
             )
 
         # Expiration before effective
-        if event_a.event_type == EventType.EXPIRATION and \
-           event_b.event_type == EventType.EFFECTIVE_DATE:
+        if (
+            event_a.event_type == EventType.EXPIRATION
+            and event_b.event_type == EventType.EFFECTIVE_DATE
+        ):
             return TimelineConflict(
                 event_a=event_a,
                 event_b=event_b,
@@ -453,14 +462,14 @@ class TimelineBuilder:
 
         # Common date formats
         formats = [
-            "%Y-%m-%d",           # 2024-01-15
-            "%B %d, %Y",          # January 15, 2024
-            "%b %d, %Y",          # Jan 15, 2024
-            "%d %B %Y",           # 15 January 2024
-            "%m/%d/%Y",           # 01/15/2024
-            "%d/%m/%Y",           # 15/01/2024
-            "%m-%d-%Y",           # 01-15-2024
-            "%Y",                 # 2024 (assume Jan 1)
+            "%Y-%m-%d",  # 2024-01-15
+            "%B %d, %Y",  # January 15, 2024
+            "%b %d, %Y",  # Jan 15, 2024
+            "%d %B %Y",  # 15 January 2024
+            "%m/%d/%Y",  # 01/15/2024
+            "%d/%m/%Y",  # 15/01/2024
+            "%m-%d-%Y",  # 01-15-2024
+            "%Y",  # 2024 (assume Jan 1)
         ]
 
         for fmt in formats:
@@ -540,7 +549,4 @@ class TimelineBuilder:
         if timeline is None:
             return []
 
-        return [
-            event for event in timeline.events
-            if entity_id in event.related_entity_ids
-        ]
+        return [event for event in timeline.events if entity_id in event.related_entity_ids]

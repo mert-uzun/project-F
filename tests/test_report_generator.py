@@ -199,9 +199,7 @@ class TestReportGenerator:
 
     def test_format_issues(self, generator, sample_report) -> None:
         """Test issue formatting."""
-        critical, _, _ = generator._categorize_conflicts(
-            sample_report.conflicts, 10
-        )
+        critical, _, _ = generator._categorize_conflicts(sample_report.conflicts, 10)
 
         formatted = generator._format_issues(critical)
 

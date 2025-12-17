@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 
 class VectorStoreError(Exception):
     """Raised when vector store operations fail."""
+
     pass
 
 
@@ -217,13 +218,15 @@ class VectorStore:
 
             if results["ids"] and results["ids"][0]:
                 for i, chunk_id in enumerate(results["ids"][0]):
-                    search_results.append(SearchResult(
-                        chunk_id=chunk_id,
-                        document_id=results["metadatas"][0][i].get("document_id", ""),
-                        content=results["documents"][0][i] if results["documents"] else "",
-                        metadata=results["metadatas"][0][i] if results["metadatas"] else {},
-                        distance=results["distances"][0][i] if results["distances"] else 0.0,
-                    ))
+                    search_results.append(
+                        SearchResult(
+                            chunk_id=chunk_id,
+                            document_id=results["metadatas"][0][i].get("document_id", ""),
+                            content=results["documents"][0][i] if results["documents"] else "",
+                            metadata=results["metadatas"][0][i] if results["metadatas"] else {},
+                            distance=results["distances"][0][i] if results["distances"] else 0.0,
+                        )
+                    )
 
             logger.debug(f"Found {len(search_results)} results")
             return search_results
@@ -258,13 +261,15 @@ class VectorStore:
 
             if results["ids"] and results["ids"][0]:
                 for i, chunk_id in enumerate(results["ids"][0]):
-                    search_results.append(SearchResult(
-                        chunk_id=chunk_id,
-                        document_id=results["metadatas"][0][i].get("document_id", ""),
-                        content=results["documents"][0][i] if results["documents"] else "",
-                        metadata=results["metadatas"][0][i] if results["metadatas"] else {},
-                        distance=results["distances"][0][i] if results["distances"] else 0.0,
-                    ))
+                    search_results.append(
+                        SearchResult(
+                            chunk_id=chunk_id,
+                            document_id=results["metadatas"][0][i].get("document_id", ""),
+                            content=results["documents"][0][i] if results["documents"] else "",
+                            metadata=results["metadatas"][0][i] if results["metadatas"] else {},
+                            distance=results["distances"][0][i] if results["distances"] else 0.0,
+                        )
+                    )
 
             return search_results
 

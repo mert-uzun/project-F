@@ -33,6 +33,7 @@ from tests.conftest import requires_llm, requires_ollama
 # ComparatorAgent Tests
 # ============================================================================
 
+
 class TestComparatorAgent:
     """Tests for ComparatorAgent - conflict detection."""
 
@@ -142,9 +143,7 @@ class TestComparatorAgent:
         # January 1 vs March 15 = 73 days
         assert "days" in conflicts[0].difference
 
-    def test_conflict_severity_based_on_difference(
-        self, vector_store, graph_store
-    ) -> None:
+    def test_conflict_severity_based_on_difference(self, vector_store, graph_store) -> None:
         """Test that severity is correctly assigned based on difference magnitude."""
         comparator = ComparatorAgent(vector_store, graph_store)
 
@@ -204,9 +203,7 @@ class TestComparatorAgent:
         assert conflicts[0].severity == ConflictSeverity.CRITICAL
 
     @pytest.mark.asyncio
-    async def test_compare_returns_empty_when_no_conflicts(
-        self, vector_store, graph_store
-    ) -> None:
+    async def test_compare_returns_empty_when_no_conflicts(self, vector_store, graph_store) -> None:
         """Test that compare returns empty list when documents have no conflicts."""
         comparator = ComparatorAgent(vector_store, graph_store)
 
@@ -227,6 +224,7 @@ class TestComparatorAgent:
 # ============================================================================
 # JudgeAgent Tests
 # ============================================================================
+
 
 class TestJudgeAgent:
     """Tests for JudgeAgent - conflict verification."""
@@ -325,14 +323,13 @@ class TestJudgeAgent:
 # Integration Tests (Require LLM)
 # ============================================================================
 
+
 class TestAgentsIntegration:
     """Integration tests that require real LLM calls."""
 
     @pytest.mark.asyncio
     @requires_llm()
-    async def test_full_detection_pipeline_with_llm(
-        self, populated_stores
-    ) -> None:
+    async def test_full_detection_pipeline_with_llm(self, populated_stores) -> None:
         """
         Test the full Comparator → Judge pipeline with real LLM.
         Validates that responses exist, not specific content.
@@ -363,9 +360,7 @@ class TestAgentsIntegration:
 
     @pytest.mark.asyncio
     @requires_ollama()
-    async def test_judge_verification_with_real_llm(
-        self, vector_store, graph_store
-    ) -> None:
+    async def test_judge_verification_with_real_llm(self, vector_store, graph_store) -> None:
         """
         Test Judge verification with real Ollama LLM.
         Validates that a response is returned.
@@ -441,6 +436,7 @@ class TestAgentsIntegration:
 # ============================================================================
 # Schema Tests
 # ============================================================================
+
 
 class TestAgentSchemas:
     """Tests for agent layer schemas."""

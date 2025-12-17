@@ -20,7 +20,8 @@ def render_inspector() -> None:
         return
 
     processed_docs = [
-        doc for doc in st.session_state.uploaded_documents
+        doc
+        for doc in st.session_state.uploaded_documents
         if doc["status"] == "processed" and doc.get("file_content")
     ]
 
@@ -34,10 +35,7 @@ def render_inspector() -> None:
         options=[doc["name"] for doc in processed_docs],
     )
 
-    selected_doc = next(
-        (doc for doc in processed_docs if doc["name"] == selected_doc_name),
-        None
-    )
+    selected_doc = next((doc for doc in processed_docs if doc["name"] == selected_doc_name), None)
 
     if not selected_doc:
         return
@@ -82,7 +80,7 @@ def render_inspector() -> None:
             except Exception as e:
                 st.error(f"Could not render PDF: {e}")
                 st.info("PDF preview not available. The document was still processed successfully.")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     with col_parsed:
         st.subheader("📊 Parsed Output")
@@ -107,7 +105,8 @@ def _render_parsed_output(doc: dict, page_num: int, view_mode: str) -> None:
         st.markdown("---")
 
         if view_mode == "Markdown Tables":
-            st.markdown("""
+            st.markdown(
+                """
             ### Extracted Tables
 
             | Field | Value |
@@ -118,17 +117,20 @@ def _render_parsed_output(doc: dict, page_num: int, view_mode: str) -> None:
 
             > **Note**: Full table extraction data would appear here
             > after API integration is complete.
-            """.format(doc_id=doc.get("id", "N/A")[:8], page=page_num))
+            """.format(doc_id=doc.get("id", "N/A")[:8], page=page_num)
+            )
 
         elif view_mode == "Raw JSON":
-            st.json({
-                "document_id": doc.get("id"),
-                "filename": doc.get("name"),
-                "page": page_num,
-                "chunk_count": doc.get("chunks", 0),
-                "entity_count": doc.get("entities", 0),
-                "status": doc.get("status"),
-            })
+            st.json(
+                {
+                    "document_id": doc.get("id"),
+                    "filename": doc.get("name"),
+                    "page": page_num,
+                    "chunk_count": doc.get("chunks", 0),
+                    "entity_count": doc.get("entities", 0),
+                    "status": doc.get("status"),
+                }
+            )
 
         else:  # Text Only
             st.text_area(
@@ -138,4 +140,4 @@ def _render_parsed_output(doc: dict, page_num: int, view_mode: str) -> None:
                 disabled=True,
             )
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)

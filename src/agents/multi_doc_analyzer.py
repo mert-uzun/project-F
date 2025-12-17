@@ -28,13 +28,13 @@ logger = get_logger(__name__)
 # Schemas
 # ============================================================================
 
+
 class DocumentSet(BaseModel):
     """A set of documents for multi-document analysis."""
 
     document_ids: list[UUID] = Field(..., description="List of document UUIDs")
     document_names: dict[str, str] = Field(
-        default_factory=dict,
-        description="Mapping of document ID (as string) to name"
+        default_factory=dict, description="Mapping of document ID (as string) to name"
     )
 
     def get_name(self, doc_id: UUID) -> str:
@@ -156,8 +156,7 @@ class MultiDocReport(BaseModel):
     conflicts: list[MultiDocConflict] = Field(default_factory=list)
     variations: list[EntityVariation] = Field(default_factory=list)
     unanimous_entities: list[str] = Field(
-        default_factory=list,
-        description="Entity values that are consistent across all docs"
+        default_factory=list, description="Entity values that are consistent across all docs"
     )
 
     # Resolved entities
@@ -192,6 +191,7 @@ class MultiDocReport(BaseModel):
 # ============================================================================
 # Multi-Document Analyzer
 # ============================================================================
+
 
 class MultiDocAnalyzer:
     """
@@ -241,14 +241,13 @@ class MultiDocAnalyzer:
             MultiDocReport with all findings
         """
         import time
+
         start_time = time.time()
 
         logger.info(f"Starting multi-document analysis of {document_set.count} documents")
 
         # Get all entities from graph, grouped by document
-        entities_by_doc = self.graph_store.get_entities_by_document(
-            document_set.document_ids
-        )
+        entities_by_doc = self.graph_store.get_entities_by_document(document_set.document_ids)
 
         # Flatten entities
         all_entities: list[Entity] = []
@@ -317,8 +316,7 @@ class MultiDocAnalyzer:
                 # Filter by focus areas if specified
                 if focus_areas:
                     type_matches = any(
-                        area.lower() in entity.entity_type.value.lower()
-                        for area in focus_areas
+                        area.lower() in entity.entity_type.value.lower() for area in focus_areas
                     )
                     if not type_matches:
                         continue
@@ -392,12 +390,14 @@ class MultiDocAnalyzer:
             conflicts.append(conflict)
 
         # Sort by severity
-        conflicts.sort(key=lambda c: {
-            ConflictSeverity.CRITICAL: 0,
-            ConflictSeverity.HIGH: 1,
-            ConflictSeverity.MEDIUM: 2,
-            ConflictSeverity.LOW: 3,
-        }.get(c.severity, 4))
+        conflicts.sort(
+            key=lambda c: {
+                ConflictSeverity.CRITICAL: 0,
+                ConflictSeverity.HIGH: 1,
+                ConflictSeverity.MEDIUM: 2,
+                ConflictSeverity.LOW: 3,
+            }.get(c.severity, 4)
+        )
 
         return conflicts
 
@@ -454,9 +454,7 @@ class MultiDocAnalyzer:
         """Get all occurrences of an entity across documents."""
         occurrences: list[EntityOccurrence] = []
 
-        entities_by_doc = self.graph_store.get_entities_by_document(
-            document_set.document_ids
-        )
+        entities_by_doc = self.graph_store.get_entities_by_document(document_set.document_ids)
 
         search_value = entity_value.lower().strip()
 
@@ -464,14 +462,16 @@ class MultiDocAnalyzer:
             for node in nodes:
                 entity = node.entity
                 if search_value in entity.value.lower():
-                    occurrences.append(EntityOccurrence(
-                        document_id=doc_id,
-                        document_name=document_set.get_name(doc_id),
-                        value=entity.value,
-                        normalized_value=entity.normalized_value,
-                        page_number=entity.source_page,
-                        chunk_id=entity.source_chunk_id,
-                        confidence=entity.confidence,
-                    ))
+                    occurrences.append(
+                        EntityOccurrence(
+                            document_id=doc_id,
+                            document_name=document_set.get_name(doc_id),
+                            value=entity.value,
+                            normalized_value=entity.normalized_value,
+                            page_number=entity.source_page,
+                            chunk_id=entity.source_chunk_id,
+                            confidence=entity.confidence,
+                        )
+                    )
 
         return occurrences

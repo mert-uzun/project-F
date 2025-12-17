@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 # Schemas
 # ============================================================================
 
+
 class CrossReference(BaseModel):
     """A cross-reference result showing where an entity is mentioned."""
 
@@ -30,8 +31,7 @@ class CrossReference(BaseModel):
     page_number: int
     context: str = Field(description="Surrounding text for context")
     relationship_to_query: str = Field(
-        default="exact_match",
-        description="How this relates to the search query"
+        default="exact_match", description="How this relates to the search query"
     )
     relevance_score: float = Field(default=1.0, ge=0.0, le=1.0)
 
@@ -50,27 +50,20 @@ class EntityProfile(BaseModel):
 
     # Relationships
     roles: list[str] = Field(
-        default_factory=list,
-        description="Roles this entity plays (from relationships)"
+        default_factory=list, description="Roles this entity plays (from relationships)"
     )
     related_amounts: list[str] = Field(
-        default_factory=list,
-        description="Monetary amounts associated with this entity"
+        default_factory=list, description="Monetary amounts associated with this entity"
     )
     related_organizations: list[str] = Field(
-        default_factory=list,
-        description="Organizations this entity is connected to"
+        default_factory=list, description="Organizations this entity is connected to"
     )
     related_people: list[str] = Field(
-        default_factory=list,
-        description="People this entity is connected to"
+        default_factory=list, description="People this entity is connected to"
     )
 
     # Timeline
-    dates: list[str] = Field(
-        default_factory=list,
-        description="Dates associated with this entity"
-    )
+    dates: list[str] = Field(default_factory=list, description="Dates associated with this entity")
 
     # All mentions with context
     mentions: list[CrossReference] = Field(default_factory=list)
@@ -103,29 +96,18 @@ class SearchQuery(BaseModel):
 
     query: str = Field(..., description="Search query text")
     entity_types: list[EntityType] | None = Field(
-        default=None,
-        description="Filter by entity types"
+        default=None, description="Filter by entity types"
     )
-    document_ids: list[UUID] | None = Field(
-        default=None,
-        description="Filter by documents"
-    )
-    min_relevance: float = Field(
-        default=0.5,
-        ge=0.0,
-        le=1.0,
-        description="Minimum relevance score"
-    )
+    document_ids: list[UUID] | None = Field(default=None, description="Filter by documents")
+    min_relevance: float = Field(default=0.5, ge=0.0, le=1.0, description="Minimum relevance score")
     max_results: int = Field(default=50, ge=1, le=200)
-    include_semantic: bool = Field(
-        default=True,
-        description="Include semantic search results"
-    )
+    include_semantic: bool = Field(default=True, description="Include semantic search results")
 
 
 # ============================================================================
 # Cross-Reference Engine
 # ============================================================================
+
 
 class CrossReferenceEngine:
     """
@@ -205,15 +187,19 @@ class CrossReferenceEngine:
                 continue
             seen_entities.add(entity.entity_id)
 
-            results.append(CrossReference(
-                entity=entity,
-                document_id=entity.source_document_id,
-                document_name=f"Document {str(entity.source_document_id)[:8]}",
-                page_number=entity.source_page,
-                context=entity.source_text[:200] if entity.source_text else "",
-                relationship_to_query="exact_match" if query.query.lower() in entity.value.lower() else "partial_match",
-                relevance_score=1.0 if query.query.lower() == entity.value.lower() else 0.9,
-            ))
+            results.append(
+                CrossReference(
+                    entity=entity,
+                    document_id=entity.source_document_id,
+                    document_name=f"Document {str(entity.source_document_id)[:8]}",
+                    page_number=entity.source_page,
+                    context=entity.source_text[:200] if entity.source_text else "",
+                    relationship_to_query="exact_match"
+                    if query.query.lower() in entity.value.lower()
+                    else "partial_match",
+                    relevance_score=1.0 if query.query.lower() == entity.value.lower() else 0.9,
+                )
+            )
 
         # 2. Semantic search (if enabled)
         if query.include_semantic and len(results) < query.max_results:
@@ -233,9 +219,7 @@ class CrossReferenceEngine:
                             continue
 
                     # Extract entities from the chunk
-                    chunk_entities = self._get_entities_from_chunk(
-                        search_result.chunk_id
-                    )
+                    chunk_entities = self._get_entities_from_chunk(search_result.chunk_id)
 
                     for entity in chunk_entities:
                         if entity.entity_id in seen_entities:
@@ -246,22 +230,24 @@ class CrossReferenceEngine:
 
                         seen_entities.add(entity.entity_id)
 
-                        results.append(CrossReference(
-                            entity=entity,
-                            document_id=search_result.document_id,
-                            document_name=f"Document {str(search_result.document_id)[:8]}",
-                            page_number=search_result.metadata.get("page_number", 1),
-                            context=search_result.content[:200],
-                            relationship_to_query="semantic_match",
-                            relevance_score=search_result.similarity,
-                        ))
+                        results.append(
+                            CrossReference(
+                                entity=entity,
+                                document_id=search_result.document_id,
+                                document_name=f"Document {str(search_result.document_id)[:8]}",
+                                page_number=search_result.metadata.get("page_number", 1),
+                                context=search_result.content[:200],
+                                relationship_to_query="semantic_match",
+                                relevance_score=search_result.similarity,
+                            )
+                        )
             except Exception as e:
                 logger.warning(f"Semantic search failed: {e}")
 
         # Sort by relevance
         results.sort(key=lambda r: -r.relevance_score)
 
-        return results[:query.max_results]
+        return results[: query.max_results]
 
     def get_entity_profile(
         self,
@@ -306,15 +292,17 @@ class CrossReferenceEngine:
             entity = node.entity
             documents.append(entity.source_document_id)
 
-            mentions.append(CrossReference(
-                entity=entity,
-                document_id=entity.source_document_id,
-                document_name=f"Document {str(entity.source_document_id)[:8]}",
-                page_number=entity.source_page,
-                context=entity.source_text[:200] if entity.source_text else "",
-                relationship_to_query="exact_match",
-                relevance_score=1.0,
-            ))
+            mentions.append(
+                CrossReference(
+                    entity=entity,
+                    document_id=entity.source_document_id,
+                    document_name=f"Document {str(entity.source_document_id)[:8]}",
+                    page_number=entity.source_page,
+                    context=entity.source_text[:200] if entity.source_text else "",
+                    relationship_to_query="exact_match",
+                    relevance_score=1.0,
+                )
+            )
 
         # Get relationships to understand roles
         roles: list[str] = []
@@ -344,7 +332,10 @@ class CrossReferenceEngine:
                 target = target_node.entity
 
                 # Categorize by relationship type
-                if rel.relationship_type in (RelationshipType.HAS_ROLE, RelationshipType.EMPLOYED_BY):
+                if rel.relationship_type in (
+                    RelationshipType.HAS_ROLE,
+                    RelationshipType.EMPLOYED_BY,
+                ):
                     if rel.relationship_type == RelationshipType.HAS_ROLE:
                         roles.append(target.value)
                     else:
@@ -439,10 +430,7 @@ class CrossReferenceEngine:
                 co_occur_counts[key] = (current[0], current[1] + 1)
 
         # Sort by count
-        sorted_results = sorted(
-            co_occur_counts.values(),
-            key=lambda x: -x[1]
-        )
+        sorted_results = sorted(co_occur_counts.values(), key=lambda x: -x[1])
 
         return sorted_results[:max_results]
 

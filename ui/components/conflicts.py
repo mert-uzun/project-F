@@ -65,10 +65,10 @@ def _render_conflict_list(conflicts: list[dict]) -> None:
             cursor: pointer;
         ">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; color: #FAFAFA;">{conflict.get('title', 'Conflict')[:40]}</span>
+                <span style="font-weight: bold; color: #FAFAFA;">{conflict.get("title", "Conflict")[:40]}</span>
                 <span style="
                     background-color: {border_color};
-                    color: {'black' if severity == 'medium' else 'white'};
+                    color: {"black" if severity == "medium" else "white"};
                     padding: 2px 8px;
                     border-radius: 4px;
                     font-size: 11px;
@@ -76,10 +76,10 @@ def _render_conflict_list(conflicts: list[dict]) -> None:
                 ">{severity.upper()}</span>
             </div>
             <div style="color: #B0B0B0; font-size: 13px; margin-top: 6px;">
-                {conflict.get('type', 'value_conflict')} | {conflict.get('document_count', 2)} docs
+                {conflict.get("type", "value_conflict")} | {conflict.get("document_count", 2)} docs
             </div>
             <div style="color: #888; font-size: 12px; margin-top: 4px;">
-                {conflict.get('description', '')[:80]}...
+                {conflict.get("description", "")[:80]}...
             </div>
         </div>
         """
@@ -107,11 +107,11 @@ def _render_conflict_detail() -> None:
 
     # Conflict detail card
     st.markdown(f"""
-    ### {conflict.get('title', 'Conflict')}
+    ### {conflict.get("title", "Conflict")}
 
-    **Type:** {conflict.get('type', 'N/A')}
-    **Severity:** {conflict.get('severity', 'N/A').upper()}
-    **Documents:** {conflict.get('document_count', 0)}
+    **Type:** {conflict.get("type", "N/A")}
+    **Severity:** {conflict.get("severity", "N/A").upper()}
+    **Documents:** {conflict.get("document_count", 0)}
     """)
 
     st.markdown("---")
@@ -126,7 +126,7 @@ def _render_conflict_detail() -> None:
             with col_val:
                 st.code(value)
             with col_doc:
-                st.caption(f"Document {i+1}")
+                st.caption(f"Document {i + 1}")
     else:
         st.caption("No value details available")
 
@@ -148,7 +148,8 @@ def _render_source_pdf() -> None:
 
     # Get documents with file content
     docs_with_content = [
-        doc for doc in st.session_state.uploaded_documents
+        doc
+        for doc in st.session_state.uploaded_documents
         if doc.get("file_content") and doc.get("id") in st.session_state.selected_document_ids
     ]
 
@@ -164,8 +165,7 @@ def _render_source_pdf() -> None:
     )
 
     selected_doc = next(
-        (doc for doc in docs_with_content if doc["name"] == selected_doc_name),
-        None
+        (doc for doc in docs_with_content if doc["name"] == selected_doc_name), None
     )
 
     if not selected_doc:
@@ -190,4 +190,4 @@ def _render_source_pdf() -> None:
         )
     except Exception as e:
         st.error(f"Could not render PDF: {e}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)

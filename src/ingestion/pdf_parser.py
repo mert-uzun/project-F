@@ -116,9 +116,7 @@ class LlamaParseClient:
             # Extract tables from markdown
             tables = self._extract_tables_from_markdown(full_text)
 
-            logger.info(
-                f"LlamaParse extracted {len(tables)} tables from {file_path.name}"
-            )
+            logger.info(f"LlamaParse extracted {len(tables)} tables from {file_path.name}")
 
             return ParsedDocument(
                 text=full_text,
@@ -159,7 +157,12 @@ class LlamaParseClient:
 
             # Detect table rows (markdown tables have | separators)
             is_table_row = "|" in line and line.strip().startswith("|")
-            is_separator = line.strip().startswith("|") and set(line.strip()) <= {"|", "-", ":", " "}
+            is_separator = line.strip().startswith("|") and set(line.strip()) <= {
+                "|",
+                "-",
+                ":",
+                " ",
+            }
 
             if is_table_row or is_separator:
                 if not in_table:
@@ -182,9 +185,7 @@ class LlamaParseClient:
 
         return tables
 
-    def _parse_markdown_table(
-        self, lines: list[str], page_number: int
-    ) -> ParsedTable | None:
+    def _parse_markdown_table(self, lines: list[str], page_number: int) -> ParsedTable | None:
         """
         Parse markdown table lines into ParsedTable.
 
@@ -199,20 +200,13 @@ class LlamaParseClient:
             return None
 
         # Filter out separator lines for data extraction
-        data_lines = [
-            line for line in lines
-            if not (set(line.strip()) <= {"|", "-", ":", " "})
-        ]
+        data_lines = [line for line in lines if not (set(line.strip()) <= {"|", "-", ":", " "})]
 
         if not data_lines:
             return None
 
         # Parse headers (first data line)
-        headers = [
-            cell.strip()
-            for cell in data_lines[0].split("|")
-            if cell.strip()
-        ]
+        headers = [cell.strip() for cell in data_lines[0].split("|") if cell.strip()]
 
         # Parse rows
         rows: list[list[str]] = []
@@ -262,9 +256,7 @@ class UnstructuredClient:
             ParsedDocument with extracted text and tables
         """
         if not self._check_availability():
-            raise PDFParserError(
-                "Unstructured not installed. Run: pip install unstructured[pdf]"
-            )
+            raise PDFParserError("Unstructured not installed. Run: pip install unstructured[pdf]")
 
         logger.info(f"Parsing with Unstructured: {file_path.name}")
 
@@ -288,16 +280,20 @@ class UnstructuredClient:
                 if element_type == "Table":
                     # Extract table
                     table_html = getattr(element, "metadata", {}).get("text_as_html", "")
-                    table_md = self._html_table_to_markdown(table_html) if table_html else str(element)
+                    table_md = (
+                        self._html_table_to_markdown(table_html) if table_html else str(element)
+                    )
 
                     page_num = getattr(element.metadata, "page_number", 1) or 1
 
-                    tables.append(ParsedTable(
-                        page_number=page_num,
-                        markdown=table_md,
-                        headers=[],  # Unstructured doesn't always give us clean headers
-                        rows=[],
-                    ))
+                    tables.append(
+                        ParsedTable(
+                            page_number=page_num,
+                            markdown=table_md,
+                            headers=[],  # Unstructured doesn't always give us clean headers
+                            rows=[],
+                        )
+                    )
                     text_parts.append(f"\n\n[TABLE]\n{table_md}\n[/TABLE]\n\n")
                 else:
                     text_parts.append(str(element))
@@ -308,9 +304,7 @@ class UnstructuredClient:
                 default=1,
             )
 
-            logger.info(
-                f"Unstructured extracted {len(tables)} tables from {file_path.name}"
-            )
+            logger.info(f"Unstructured extracted {len(tables)} tables from {file_path.name}")
 
             return ParsedDocument(
                 text=full_text,

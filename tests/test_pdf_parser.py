@@ -16,6 +16,7 @@ from src.ingestion.schemas import ParseResult
 # Parser Initialization Tests
 # ============================================================================
 
+
 class TestPDFParserInit:
     """Tests for PDFParser initialization."""
 
@@ -50,6 +51,7 @@ class TestPDFParserInit:
 # ============================================================================
 # LlamaParseClient Table Parsing Tests
 # ============================================================================
+
 
 class TestLlamaParseClientTables:
     """Tests for table extraction from LlamaParseClient."""
@@ -140,6 +142,7 @@ Only paragraphs of text.
 # UnstructuredClient Tests
 # ============================================================================
 
+
 class TestUnstructuredClient:
     """Tests for UnstructuredClient."""
 
@@ -166,6 +169,7 @@ class TestUnstructuredClient:
 # ============================================================================
 # Integration Tests (Require Files)
 # ============================================================================
+
 
 class TestPDFParserIntegration:
     """Integration tests that require actual PDF files."""

@@ -46,7 +46,8 @@ class TestColorSchemes:
     def test_colors_are_valid_hex(self) -> None:
         """Test all colors are valid hex codes."""
         import re
-        hex_pattern = re.compile(r'^#[0-9A-Fa-f]{6}$')
+
+        hex_pattern = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
         for color in SEVERITY_COLORS.values():
             assert hex_pattern.match(color), f"Invalid color: {color}"
@@ -124,9 +125,7 @@ class TestGraphVisualizer:
         graph_store_with_entities,
     ) -> None:
         """Test network generation with document filter."""
-        network = visualizer.generate_network(
-            document_ids=[graph_store_with_entities._doc_id]
-        )
+        network = visualizer.generate_network(document_ids=[graph_store_with_entities._doc_id])
 
         assert network is not None
 
@@ -135,9 +134,7 @@ class TestGraphVisualizer:
         visualizer,
     ) -> None:
         """Test network generation with entity type filter."""
-        network = visualizer.generate_network(
-            entity_types=[EntityType.PERSON]
-        )
+        network = visualizer.generate_network(entity_types=[EntityType.PERSON])
 
         assert network is not None
 
@@ -166,7 +163,9 @@ class TestGraphVisualizer:
         short = visualizer._truncate_label("Short")
         assert short == "Short"
 
-        long = visualizer._truncate_label("This is a very long entity name that should be truncated")
+        long = visualizer._truncate_label(
+            "This is a very long entity name that should be truncated"
+        )
         assert len(long) <= 25
         assert long.endswith("...")
 

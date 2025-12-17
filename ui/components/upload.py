@@ -53,8 +53,7 @@ def render_upload() -> None:
             with col_action:
                 # Check if already uploaded
                 already_uploaded = any(
-                    doc["name"] == file.name
-                    for doc in st.session_state.uploaded_documents
+                    doc["name"] == file.name for doc in st.session_state.uploaded_documents
                 )
                 if already_uploaded:
                     st.caption("✅ Done")
@@ -98,26 +97,30 @@ def _process_uploads(files: list) -> None:
             result = client.upload_document(tmp_path, file.name)
 
             # Store in session state
-            st.session_state.uploaded_documents.append({
-                "id": result.get("document_id"),
-                "name": file.name,
-                "status": "processed",
-                "chunks": result.get("chunk_count", 0),
-                "entities": result.get("entity_count", 0),
-                "file_content": file.getvalue(),  # Keep for PDF viewer
-            })
+            st.session_state.uploaded_documents.append(
+                {
+                    "id": result.get("document_id"),
+                    "name": file.name,
+                    "status": "processed",
+                    "chunks": result.get("chunk_count", 0),
+                    "entities": result.get("entity_count", 0),
+                    "file_content": file.getvalue(),  # Keep for PDF viewer
+                }
+            )
 
             # Clean up temp file
             tmp_path.unlink(missing_ok=True)
 
         except Exception as e:
             st.error(f"Failed to upload {file.name}: {e}")
-            st.session_state.uploaded_documents.append({
-                "id": None,
-                "name": file.name,
-                "status": "error",
-                "error": str(e),
-            })
+            st.session_state.uploaded_documents.append(
+                {
+                    "id": None,
+                    "name": file.name,
+                    "status": "error",
+                    "error": str(e),
+                }
+            )
 
         progress_bar.progress((idx + 1) / len(files))
 
@@ -146,7 +149,9 @@ def _render_document_list() -> None:
 
             with col_stats:
                 if doc["status"] == "processed":
-                    st.caption(f"📦 {doc.get('chunks', 0)} chunks | 🏷️ {doc.get('entities', 0)} entities")
+                    st.caption(
+                        f"📦 {doc.get('chunks', 0)} chunks | 🏷️ {doc.get('entities', 0)} entities"
+                    )
                 elif doc["status"] == "error":
                     st.caption(f"Error: {doc.get('error', 'Unknown')[:30]}")
 
@@ -160,8 +165,7 @@ def _render_document_list() -> None:
     # Select documents for analysis
     if len(st.session_state.uploaded_documents) >= 2:
         processed_docs = [
-            doc for doc in st.session_state.uploaded_documents
-            if doc["status"] == "processed"
+            doc for doc in st.session_state.uploaded_documents if doc["status"] == "processed"
         ]
 
         if len(processed_docs) >= 2:
@@ -174,8 +178,7 @@ def _render_document_list() -> None:
             )
 
             st.session_state.selected_document_ids = [
-                doc["id"] for doc in processed_docs
-                if doc["name"] in selected
+                doc["id"] for doc in processed_docs if doc["name"] in selected
             ]
 
             if len(selected) >= 2:

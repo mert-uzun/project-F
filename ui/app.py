@@ -23,7 +23,8 @@ def inject_custom_css() -> None:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     except FileNotFoundError:
         # Fallback inline styles
-        st.markdown("""
+        st.markdown(
+            """
         <style>
         .stApp { background-color: #0E1117; }
         .conflict-card {
@@ -42,7 +43,9 @@ def inject_custom_css() -> None:
             border: 1px solid #333;
         }
         </style>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
 
 def init_session_state() -> None:
@@ -64,7 +67,9 @@ def init_session_state() -> None:
 def render_sidebar() -> None:
     """Render sidebar with navigation and document list."""
     with st.sidebar:
-        st.image("https://via.placeholder.com/200x50/1E3A5F/D4AF37?text=Conflict+Detector", width=200)
+        st.image(
+            "https://via.placeholder.com/200x50/1E3A5F/D4AF37?text=Conflict+Detector", width=200
+        )
         st.markdown("---")
 
         # Navigation
@@ -102,24 +107,31 @@ def render_main_content() -> None:
 
     if page == "upload":
         from ui.components.upload import render_upload
+
         render_upload()
     elif page == "inspector":
         from ui.components.inspector import render_inspector
+
         render_inspector()
     elif page == "analysis":
         from ui.components.analysis import render_analysis
+
         render_analysis()
     elif page == "conflicts":
         from ui.components.conflicts import render_conflicts
+
         render_conflicts()
     elif page == "graph":
         from ui.components.graph import render_graph
+
         render_graph()
     elif page == "timeline":
         from ui.components.timeline import render_timeline
+
         render_timeline()
     elif page == "report":
         from ui.components.report import render_report
+
         render_report()
     else:
         st.error(f"Unknown page: {page}")

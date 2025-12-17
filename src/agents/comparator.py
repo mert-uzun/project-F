@@ -35,6 +35,7 @@ logger = get_logger(__name__)
 
 class ComparatorError(Exception):
     """Raised when comparison fails."""
+
     pass
 
 
@@ -92,6 +93,7 @@ class ConflictDetectionOutput(BaseModel):
 # Comparator Agent
 # ============================================================================
 
+
 class ComparatorAgent:
     """
     Agent that detects conflicts between documents.
@@ -127,6 +129,7 @@ class ComparatorAgent:
         """Get LLM instance."""
         if self._llm is None:
             from src.utils.llm_factory import get_llm
+
             self._llm = get_llm()
         return self._llm
 
@@ -221,28 +224,36 @@ class ComparatorAgent:
 
         # Check monetary amounts
         if "salary" in focus_areas or "amount" in focus_areas:
-            conflicts.extend(self._compare_monetary_values(
-                by_type_a.get(EntityType.MONETARY_AMOUNT, []),
-                by_type_b.get(EntityType.MONETARY_AMOUNT, []),
-            ))
-            conflicts.extend(self._compare_monetary_values(
-                by_type_a.get(EntityType.SALARY, []),
-                by_type_b.get(EntityType.SALARY, []),
-            ))
+            conflicts.extend(
+                self._compare_monetary_values(
+                    by_type_a.get(EntityType.MONETARY_AMOUNT, []),
+                    by_type_b.get(EntityType.MONETARY_AMOUNT, []),
+                )
+            )
+            conflicts.extend(
+                self._compare_monetary_values(
+                    by_type_a.get(EntityType.SALARY, []),
+                    by_type_b.get(EntityType.SALARY, []),
+                )
+            )
 
         # Check percentages/equity
         if "equity" in focus_areas or "percentage" in focus_areas:
-            conflicts.extend(self._compare_percentage_values(
-                by_type_a.get(EntityType.PERCENTAGE, []) + by_type_a.get(EntityType.EQUITY, []),
-                by_type_b.get(EntityType.PERCENTAGE, []) + by_type_b.get(EntityType.EQUITY, []),
-            ))
+            conflicts.extend(
+                self._compare_percentage_values(
+                    by_type_a.get(EntityType.PERCENTAGE, []) + by_type_a.get(EntityType.EQUITY, []),
+                    by_type_b.get(EntityType.PERCENTAGE, []) + by_type_b.get(EntityType.EQUITY, []),
+                )
+            )
 
         # Check dates
         if "dates" in focus_areas:
-            conflicts.extend(self._compare_date_values(
-                by_type_a.get(EntityType.DATE, []),
-                by_type_b.get(EntityType.DATE, []),
-            ))
+            conflicts.extend(
+                self._compare_date_values(
+                    by_type_a.get(EntityType.DATE, []),
+                    by_type_b.get(EntityType.DATE, []),
+                )
+            )
 
         return conflicts
 
@@ -279,44 +290,46 @@ class ComparatorAgent:
                     else:
                         severity = ConflictSeverity.LOW
 
-                    conflicts.append(Conflict(
-                        conflict_type=ConflictType.AMOUNT_MISMATCH,
-                        severity=severity,
-                        status=ConflictStatus.DETECTED,
-                        title=f"Amount Mismatch: {a.value} vs {b.value}",
-                        description=(
-                            f"Document A states '{a.value}' while Document B states '{b.value}'. "
-                            f"Difference: {diff_pct:.1f}%"
-                        ),
-                        evidence_a=ConflictEvidence(
-                            entity=a,
-                            citation=SourceCitation(
-                                document_id=a.source_document_id,
-                                document_name="Document A",
-                                page_number=a.source_page,
-                                chunk_id=a.source_chunk_id,
-                                excerpt=a.source_text[:200],
+                    conflicts.append(
+                        Conflict(
+                            conflict_type=ConflictType.AMOUNT_MISMATCH,
+                            severity=severity,
+                            status=ConflictStatus.DETECTED,
+                            title=f"Amount Mismatch: {a.value} vs {b.value}",
+                            description=(
+                                f"Document A states '{a.value}' while Document B states '{b.value}'. "
+                                f"Difference: {diff_pct:.1f}%"
                             ),
-                            extracted_value=a.value,
-                            normalized_value=str(norm_a),
-                        ),
-                        evidence_b=ConflictEvidence(
-                            entity=b,
-                            citation=SourceCitation(
-                                document_id=b.source_document_id,
-                                document_name="Document B",
-                                page_number=b.source_page,
-                                chunk_id=b.source_chunk_id,
-                                excerpt=b.source_text[:200],
+                            evidence_a=ConflictEvidence(
+                                entity=a,
+                                citation=SourceCitation(
+                                    document_id=a.source_document_id,
+                                    document_name="Document A",
+                                    page_number=a.source_page,
+                                    chunk_id=a.source_chunk_id,
+                                    excerpt=a.source_text[:200],
+                                ),
+                                extracted_value=a.value,
+                                normalized_value=str(norm_a),
                             ),
-                            extracted_value=b.value,
-                            normalized_value=str(norm_b),
-                        ),
-                        value_a=a.value,
-                        value_b=b.value,
-                        difference=f"{diff_pct:.1f}%",
-                        confidence=min(a.confidence, b.confidence) * 0.9,
-                    ))
+                            evidence_b=ConflictEvidence(
+                                entity=b,
+                                citation=SourceCitation(
+                                    document_id=b.source_document_id,
+                                    document_name="Document B",
+                                    page_number=b.source_page,
+                                    chunk_id=b.source_chunk_id,
+                                    excerpt=b.source_text[:200],
+                                ),
+                                extracted_value=b.value,
+                                normalized_value=str(norm_b),
+                            ),
+                            value_a=a.value,
+                            value_b=b.value,
+                            difference=f"{diff_pct:.1f}%",
+                            confidence=min(a.confidence, b.confidence) * 0.9,
+                        )
+                    )
 
         return conflicts
 
@@ -348,44 +361,46 @@ class ComparatorAgent:
                     else:
                         severity = ConflictSeverity.LOW
 
-                    conflicts.append(Conflict(
-                        conflict_type=ConflictType.PERCENTAGE_MISMATCH,
-                        severity=severity,
-                        status=ConflictStatus.DETECTED,
-                        title=f"Percentage Mismatch: {a.value} vs {b.value}",
-                        description=(
-                            f"Document A states '{a.value}' while Document B states '{b.value}'. "
-                            f"Difference: {diff:.1f} percentage points"
-                        ),
-                        evidence_a=ConflictEvidence(
-                            entity=a,
-                            citation=SourceCitation(
-                                document_id=a.source_document_id,
-                                document_name="Document A",
-                                page_number=a.source_page,
-                                chunk_id=a.source_chunk_id,
-                                excerpt=a.source_text[:200],
+                    conflicts.append(
+                        Conflict(
+                            conflict_type=ConflictType.PERCENTAGE_MISMATCH,
+                            severity=severity,
+                            status=ConflictStatus.DETECTED,
+                            title=f"Percentage Mismatch: {a.value} vs {b.value}",
+                            description=(
+                                f"Document A states '{a.value}' while Document B states '{b.value}'. "
+                                f"Difference: {diff:.1f} percentage points"
                             ),
-                            extracted_value=a.value,
-                            normalized_value=str(pct_a),
-                        ),
-                        evidence_b=ConflictEvidence(
-                            entity=b,
-                            citation=SourceCitation(
-                                document_id=b.source_document_id,
-                                document_name="Document B",
-                                page_number=b.source_page,
-                                chunk_id=b.source_chunk_id,
-                                excerpt=b.source_text[:200],
+                            evidence_a=ConflictEvidence(
+                                entity=a,
+                                citation=SourceCitation(
+                                    document_id=a.source_document_id,
+                                    document_name="Document A",
+                                    page_number=a.source_page,
+                                    chunk_id=a.source_chunk_id,
+                                    excerpt=a.source_text[:200],
+                                ),
+                                extracted_value=a.value,
+                                normalized_value=str(pct_a),
                             ),
-                            extracted_value=b.value,
-                            normalized_value=str(pct_b),
-                        ),
-                        value_a=a.value,
-                        value_b=b.value,
-                        difference=f"{diff:.1f}pp",
-                        confidence=min(a.confidence, b.confidence) * 0.9,
-                    ))
+                            evidence_b=ConflictEvidence(
+                                entity=b,
+                                citation=SourceCitation(
+                                    document_id=b.source_document_id,
+                                    document_name="Document B",
+                                    page_number=b.source_page,
+                                    chunk_id=b.source_chunk_id,
+                                    excerpt=b.source_text[:200],
+                                ),
+                                extracted_value=b.value,
+                                normalized_value=str(pct_b),
+                            ),
+                            value_a=a.value,
+                            value_b=b.value,
+                            difference=f"{diff:.1f}pp",
+                            confidence=min(a.confidence, b.confidence) * 0.9,
+                        )
+                    )
 
         return conflicts
 
@@ -421,44 +436,46 @@ class ComparatorAgent:
                 else:
                     severity = ConflictSeverity.LOW
 
-                conflicts.append(Conflict(
-                    conflict_type=ConflictType.DATE_CONFLICT,
-                    severity=severity,
-                    status=ConflictStatus.DETECTED,
-                    title=f"Date Mismatch: {a.value} vs {b.value}",
-                    description=(
-                        f"Document A states '{a.value}' while Document B states '{b.value}'. "
-                        f"Difference: {diff_days} days"
-                    ),
-                    evidence_a=ConflictEvidence(
-                        entity=a,
-                        citation=SourceCitation(
-                            document_id=a.source_document_id,
-                            document_name="Document A",
-                            page_number=a.source_page,
-                            chunk_id=a.source_chunk_id,
-                            excerpt=a.source_text[:200],
+                conflicts.append(
+                    Conflict(
+                        conflict_type=ConflictType.DATE_CONFLICT,
+                        severity=severity,
+                        status=ConflictStatus.DETECTED,
+                        title=f"Date Mismatch: {a.value} vs {b.value}",
+                        description=(
+                            f"Document A states '{a.value}' while Document B states '{b.value}'. "
+                            f"Difference: {diff_days} days"
                         ),
-                        extracted_value=a.value,
-                        normalized_value=date_a.isoformat() if date_a else None,
-                    ),
-                    evidence_b=ConflictEvidence(
-                        entity=b,
-                        citation=SourceCitation(
-                            document_id=b.source_document_id,
-                            document_name="Document B",
-                            page_number=b.source_page,
-                            chunk_id=b.source_chunk_id,
-                            excerpt=b.source_text[:200],
+                        evidence_a=ConflictEvidence(
+                            entity=a,
+                            citation=SourceCitation(
+                                document_id=a.source_document_id,
+                                document_name="Document A",
+                                page_number=a.source_page,
+                                chunk_id=a.source_chunk_id,
+                                excerpt=a.source_text[:200],
+                            ),
+                            extracted_value=a.value,
+                            normalized_value=date_a.isoformat() if date_a else None,
                         ),
-                        extracted_value=b.value,
-                        normalized_value=date_b.isoformat() if date_b else None,
-                    ),
-                    value_a=a.value,
-                    value_b=b.value,
-                    difference=f"{diff_days} days",
-                    confidence=min(a.confidence, b.confidence) * 0.85,
-                ))
+                        evidence_b=ConflictEvidence(
+                            entity=b,
+                            citation=SourceCitation(
+                                document_id=b.source_document_id,
+                                document_name="Document B",
+                                page_number=b.source_page,
+                                chunk_id=b.source_chunk_id,
+                                excerpt=b.source_text[:200],
+                            ),
+                            extracted_value=b.value,
+                            normalized_value=date_b.isoformat() if date_b else None,
+                        ),
+                        value_a=a.value,
+                        value_b=b.value,
+                        difference=f"{diff_days} days",
+                        confidence=min(a.confidence, b.confidence) * 0.85,
+                    )
+                )
 
         return conflicts
 
@@ -469,14 +486,14 @@ class ComparatorAgent:
 
         # Try common date formats
         formats = [
-            "%Y-%m-%d",          # 2024-01-15
-            "%m/%d/%Y",          # 01/15/2024
-            "%d/%m/%Y",          # 15/01/2024
-            "%B %d, %Y",         # January 15, 2024
-            "%b %d, %Y",         # Jan 15, 2024
-            "%d %B %Y",          # 15 January 2024
-            "%d %b %Y",          # 15 Jan 2024
-            "%Y/%m/%d",          # 2024/01/15
+            "%Y-%m-%d",  # 2024-01-15
+            "%m/%d/%Y",  # 01/15/2024
+            "%d/%m/%Y",  # 15/01/2024
+            "%B %d, %Y",  # January 15, 2024
+            "%b %d, %Y",  # Jan 15, 2024
+            "%d %B %Y",  # 15 January 2024
+            "%d %b %Y",  # 15 Jan 2024
+            "%Y/%m/%d",  # 2024/01/15
         ]
 
         cleaned = value.strip()
@@ -488,7 +505,7 @@ class ComparatorAgent:
                 continue
 
         # Try to extract year at minimum
-        year_match = re.search(r'\b(19|20)\d{2}\b', cleaned)
+        year_match = re.search(r"\b(19|20)\d{2}\b", cleaned)
         if year_match:
             year = int(year_match.group())
             # Default to January 1 if only year found
@@ -528,14 +545,10 @@ class ComparatorAgent:
                 for j in range(i + 1, len(doc_ids)):
                     # Get relevant chunks from each document
                     chunks_a = self.vector_store.search(
-                        search_query,
-                        top_k=3,
-                        filter_document_id=doc_ids[i]
+                        search_query, top_k=3, filter_document_id=doc_ids[i]
                     )
                     chunks_b = self.vector_store.search(
-                        search_query,
-                        top_k=3,
-                        filter_document_id=doc_ids[j]
+                        search_query, top_k=3, filter_document_id=doc_ids[j]
                     )
 
                     if chunks_a and chunks_b:
@@ -616,38 +629,40 @@ class ComparatorAgent:
                     confidence=detected.confidence,
                 )
 
-                conflicts.append(Conflict(
-                    conflict_type=conflict_type,
-                    severity=severity,
-                    status=ConflictStatus.DETECTED,
-                    title=detected.description[:80],
-                    description=detected.description,
-                    evidence_a=ConflictEvidence(
-                        entity=entity_a,
-                        citation=SourceCitation(
-                            document_id=doc_id_a,
-                            document_name="Document A",
-                            page_number=entity_a.source_page,
-                            chunk_id=entity_a.source_chunk_id,
-                            excerpt=context_a[:200],
+                conflicts.append(
+                    Conflict(
+                        conflict_type=conflict_type,
+                        severity=severity,
+                        status=ConflictStatus.DETECTED,
+                        title=detected.description[:80],
+                        description=detected.description,
+                        evidence_a=ConflictEvidence(
+                            entity=entity_a,
+                            citation=SourceCitation(
+                                document_id=doc_id_a,
+                                document_name="Document A",
+                                page_number=entity_a.source_page,
+                                chunk_id=entity_a.source_chunk_id,
+                                excerpt=context_a[:200],
+                            ),
+                            extracted_value=detected.value_a,
                         ),
-                        extracted_value=detected.value_a,
-                    ),
-                    evidence_b=ConflictEvidence(
-                        entity=entity_b,
-                        citation=SourceCitation(
-                            document_id=doc_id_b,
-                            document_name="Document B",
-                            page_number=entity_b.source_page,
-                            chunk_id=entity_b.source_chunk_id,
-                            excerpt=context_b[:200],
+                        evidence_b=ConflictEvidence(
+                            entity=entity_b,
+                            citation=SourceCitation(
+                                document_id=doc_id_b,
+                                document_name="Document B",
+                                page_number=entity_b.source_page,
+                                chunk_id=entity_b.source_chunk_id,
+                                excerpt=context_b[:200],
+                            ),
+                            extracted_value=detected.value_b,
                         ),
-                        extracted_value=detected.value_b,
-                    ),
-                    value_a=detected.value_a,
-                    value_b=detected.value_b,
-                    confidence=detected.confidence,
-                ))
+                        value_a=detected.value_a,
+                        value_b=detected.value_b,
+                        confidence=detected.confidence,
+                    )
+                )
 
             return conflicts
 
@@ -697,4 +712,3 @@ class ComparatorAgent:
             return float(cleaned)
         except ValueError:
             return None
-

@@ -37,9 +37,7 @@ def _create_openai_llm(settings: "Settings") -> LLM:
         ) from e
 
     if not settings.openai_api_key:
-        raise LLMFactoryError(
-            "OPENAI_API_KEY not set. Required when llm_backend='openai'"
-        )
+        raise LLMFactoryError("OPENAI_API_KEY not set. Required when llm_backend='openai'")
 
     logger.info(f"Initializing OpenAI LLM with model: {settings.openai_model}")
     return OpenAI(
@@ -58,8 +56,7 @@ def _create_ollama_llm(settings: "Settings") -> LLM:
         ) from e
 
     logger.info(
-        f"Initializing Ollama LLM with model: {settings.ollama_model} "
-        f"at {settings.ollama_base_url}"
+        f"Initializing Ollama LLM with model: {settings.ollama_model} at {settings.ollama_base_url}"
     )
     return Ollama(
         model=settings.ollama_model,
@@ -88,14 +85,11 @@ def _create_openai_embedding(settings: "Settings") -> BaseEmbedding:
         from llama_index.embeddings.openai import OpenAIEmbedding
     except ImportError as e:
         raise LLMFactoryError(
-            "OpenAI embeddings not installed. "
-            "Run: pip install llama-index-embeddings-openai"
+            "OpenAI embeddings not installed. Run: pip install llama-index-embeddings-openai"
         ) from e
 
     if not settings.openai_api_key:
-        raise LLMFactoryError(
-            "OPENAI_API_KEY not set. Required when embedding_backend='openai'"
-        )
+        raise LLMFactoryError("OPENAI_API_KEY not set. Required when embedding_backend='openai'")
 
     logger.info(f"Initializing OpenAI embeddings with model: {settings.embedding_model}")
     return OpenAIEmbedding(
@@ -145,9 +139,7 @@ def get_embedding_model() -> BaseEmbedding:
         case EmbeddingBackend.OPENAI:
             return _create_openai_embedding(settings)
         case _:
-            raise LLMFactoryError(
-                f"Unsupported embedding backend: {settings.embedding_backend}"
-            )
+            raise LLMFactoryError(f"Unsupported embedding backend: {settings.embedding_backend}")
 
 
 def configure_llama_index() -> None:

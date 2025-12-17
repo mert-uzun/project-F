@@ -29,6 +29,7 @@ from src.knowledge.schemas import Entity, EntityType
 # Event Loop
 # ============================================================================
 
+
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create event loop for async tests."""
@@ -41,6 +42,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # Skip Markers
 # ============================================================================
 
+
 def requires_llm():
     """Skip test if LLM is not available."""
     # Check if Ollama is running or OpenAI key is set
@@ -50,14 +52,14 @@ def requires_llm():
     has_ollama = False
     try:
         import httpx
+
         response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
         has_ollama = response.status_code == 200
     except Exception:
         pass
 
     return pytest.mark.skipif(
-        not (has_openai or has_ollama),
-        reason="Requires LLM backend (Ollama or OpenAI)"
+        not (has_openai or has_ollama), reason="Requires LLM backend (Ollama or OpenAI)"
     )
 
 
@@ -66,20 +68,19 @@ def requires_ollama():
     has_ollama = False
     try:
         import httpx
+
         response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
         has_ollama = response.status_code == 200
     except Exception:
         pass
 
-    return pytest.mark.skipif(
-        not has_ollama,
-        reason="Requires Ollama running on localhost:11434"
-    )
+    return pytest.mark.skipif(not has_ollama, reason="Requires Ollama running on localhost:11434")
 
 
 # ============================================================================
 # Path Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_pdf_path() -> Path:
@@ -104,6 +105,7 @@ def temp_graph_path(tmp_path: Path) -> Path:
 # ============================================================================
 # Document Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_document_id() -> uuid4:
@@ -230,6 +232,7 @@ def sample_chunks(sample_document_id) -> list[DocumentChunk]:
 # ============================================================================
 # Entity Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_entities(sample_document_id) -> list[Entity]:
@@ -365,6 +368,7 @@ def conflicting_entities() -> tuple[list[Entity], list[Entity]]:
 # ============================================================================
 # Store Fixtures (Real, not mocked)
 # ============================================================================
+
 
 @pytest.fixture
 def vector_store(temp_chroma_dir):
