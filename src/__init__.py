@@ -8,22 +8,22 @@ This package contains the core functionality for:
 - Utility functions
 """
 
-from src.ingestion import PDFParser, SemanticChunker
-from src.knowledge import (
-    VectorStore,
-    GraphStore,
-    EntityExtractor,
-    EntityResolver,
-    CrossReferenceEngine,
-    TimelineBuilder,
-    GraphVisualizer,
-)
 from src.agents import (
     ComparatorAgent,
     JudgeAgent,
     MultiDocAnalyzer,
     ReferenceDetector,
     ReportGenerator,
+)
+from src.ingestion import PDFParser, SemanticChunker
+from src.knowledge import (
+    CrossReferenceEngine,
+    EntityExtractor,
+    EntityResolver,
+    GraphStore,
+    GraphVisualizer,
+    TimelineBuilder,
+    VectorStore,
 )
 
 __all__ = [

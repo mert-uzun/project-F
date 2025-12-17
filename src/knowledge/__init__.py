@@ -4,20 +4,20 @@ Knowledge Layer - GraphRAG Components.
 Vector store for semantic search + Graph store for entity relationships.
 """
 
-from src.knowledge.vector_store import VectorStore, VectorStoreConfig
-from src.knowledge.graph_store import GraphStore, GraphNode, GraphEdge
+from src.knowledge.cross_reference import CrossReference, CrossReferenceEngine, EntityProfile
 from src.knowledge.entity_extractor import EntityExtractor, ExtractedEntity
 from src.knowledge.entity_resolver import EntityResolver, ResolvedEntity
-from src.knowledge.cross_reference import CrossReferenceEngine, CrossReference, EntityProfile
-from src.knowledge.timeline_builder import TimelineBuilder, Timeline, TimelineEvent
+from src.knowledge.graph_store import GraphEdge, GraphNode, GraphStore
 from src.knowledge.graph_visualizer import GraphVisualizer, visualize_knowledge_graph
 from src.knowledge.schemas import (
     Entity,
-    Relationship,
     EntityType,
-    RelationshipType,
     KnowledgeGraphNode,
+    Relationship,
+    RelationshipType,
 )
+from src.knowledge.timeline_builder import Timeline, TimelineBuilder, TimelineEvent
+from src.knowledge.vector_store import VectorStore, VectorStoreConfig
 
 __all__ = [
     # Stores

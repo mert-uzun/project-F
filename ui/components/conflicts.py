@@ -11,7 +11,7 @@ from streamlit_pdf_viewer import pdf_viewer
 def render_conflicts() -> None:
     """Render the conflict workbench with master-detail split."""
     st.header("⚠️ Conflict Workbench")
-    
+
     # Check for conflicts
     if not st.session_state.conflicts:
         st.info("No conflicts detected yet. Run analysis first.")
@@ -19,19 +19,19 @@ def render_conflicts() -> None:
             st.session_state.current_page = "analysis"
             st.rerun()
         return
-    
+
     conflicts = st.session_state.conflicts
     st.caption(f"{len(conflicts)} conflicts detected")
-    
+
     st.markdown("---")
-    
+
     # Master-detail split (40/60)
     col_list, col_detail = st.columns([0.4, 0.6])
-    
+
     with col_list:
         st.subheader("📋 Conflict Feed")
         _render_conflict_list(conflicts)
-    
+
     with col_detail:
         st.subheader("📄 Document View")
         _render_conflict_detail()
@@ -39,10 +39,10 @@ def render_conflicts() -> None:
 
 def _render_conflict_list(conflicts: list[dict]) -> None:
     """Render the scrollable list of conflict cards."""
-    
+
     for idx, conflict in enumerate(conflicts):
         is_selected = idx == st.session_state.current_conflict_idx
-        
+
         # Severity styling
         severity = conflict.get("severity", "medium").lower()
         severity_colors = {
@@ -53,7 +53,7 @@ def _render_conflict_list(conflicts: list[dict]) -> None:
         }
         border_color = severity_colors.get(severity, "#FFC107")
         bg_color = "#363740" if is_selected else "#262730"
-        
+
         # Render conflict card
         card_html = f"""
         <div style="
@@ -84,9 +84,9 @@ def _render_conflict_list(conflicts: list[dict]) -> None:
         </div>
         """
         st.markdown(card_html, unsafe_allow_html=True)
-        
+
         # Button to select this conflict
-        if st.button(f"View Details", key=f"conflict_{idx}", use_container_width=True):
+        if st.button("View Details", key=f"conflict_{idx}", use_container_width=True):
             st.session_state.current_conflict_idx = idx
             # Try to navigate to the source page
             if conflict.get("source_page"):
@@ -98,27 +98,27 @@ def _render_conflict_detail() -> None:
     """Render the detail view for the selected conflict."""
     conflicts = st.session_state.conflicts
     idx = st.session_state.current_conflict_idx
-    
+
     if idx >= len(conflicts):
         st.info("Select a conflict from the list")
         return
-    
+
     conflict = conflicts[idx]
-    
+
     # Conflict detail card
     st.markdown(f"""
     ### {conflict.get('title', 'Conflict')}
-    
-    **Type:** {conflict.get('type', 'N/A')}  
-    **Severity:** {conflict.get('severity', 'N/A').upper()}  
+
+    **Type:** {conflict.get('type', 'N/A')}
+    **Severity:** {conflict.get('severity', 'N/A').upper()}
     **Documents:** {conflict.get('document_count', 0)}
     """)
-    
+
     st.markdown("---")
-    
+
     # Values comparison
     st.markdown("#### 📊 Value Comparison")
-    
+
     unique_values = conflict.get("unique_values", [])
     if unique_values:
         for i, value in enumerate(unique_values[:5]):
@@ -129,15 +129,15 @@ def _render_conflict_detail() -> None:
                 st.caption(f"Document {i+1}")
     else:
         st.caption("No value details available")
-    
+
     st.markdown("---")
-    
+
     # Description
     st.markdown("#### 📝 Description")
     st.write(conflict.get("description", "No description available"))
-    
+
     st.markdown("---")
-    
+
     # PDF Viewer (if we have the document)
     _render_source_pdf()
 
@@ -145,32 +145,32 @@ def _render_conflict_detail() -> None:
 def _render_source_pdf() -> None:
     """Render PDF viewer for the source document."""
     st.markdown("#### 📄 Source Document")
-    
+
     # Get documents with file content
     docs_with_content = [
         doc for doc in st.session_state.uploaded_documents
         if doc.get("file_content") and doc.get("id") in st.session_state.selected_document_ids
     ]
-    
+
     if not docs_with_content:
         st.caption("PDF preview not available")
         return
-    
+
     # Document selector
     selected_doc_name = st.selectbox(
         "Select Document",
         options=[doc["name"] for doc in docs_with_content],
         key="conflict_pdf_selector",
     )
-    
+
     selected_doc = next(
         (doc for doc in docs_with_content if doc["name"] == selected_doc_name),
         None
     )
-    
+
     if not selected_doc:
         return
-    
+
     # Page selector
     page = st.number_input(
         "Page",
@@ -178,7 +178,7 @@ def _render_source_pdf() -> None:
         value=st.session_state.get("pdf_page", 1),
         key="conflict_pdf_page",
     )
-    
+
     # Render PDF
     st.markdown('<div class="pdf-container">', unsafe_allow_html=True)
     try:

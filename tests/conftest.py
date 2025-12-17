@@ -9,8 +9,8 @@ Tests require:
 
 import asyncio
 import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import AsyncGenerator, Generator
 from uuid import uuid4
 
 import pytest
@@ -23,8 +23,7 @@ from src.ingestion.schemas import (
     ParsedTable,
     ParseResult,
 )
-from src.knowledge.schemas import Entity, EntityType, Relationship, RelationshipType
-
+from src.knowledge.schemas import Entity, EntityType
 
 # ============================================================================
 # Event Loop
@@ -46,7 +45,7 @@ def requires_llm():
     """Skip test if LLM is not available."""
     # Check if Ollama is running or OpenAI key is set
     has_openai = bool(os.getenv("OPENAI_API_KEY"))
-    
+
     # Try to check Ollama availability
     has_ollama = False
     try:
@@ -55,7 +54,7 @@ def requires_llm():
         has_ollama = response.status_code == 200
     except Exception:
         pass
-    
+
     return pytest.mark.skipif(
         not (has_openai or has_ollama),
         reason="Requires LLM backend (Ollama or OpenAI)"
@@ -71,7 +70,7 @@ def requires_ollama():
         has_ollama = response.status_code == 200
     except Exception:
         pass
-    
+
     return pytest.mark.skipif(
         not has_ollama,
         reason="Requires Ollama running on localhost:11434"
@@ -126,7 +125,7 @@ def sample_parse_result(sample_document_id) -> ParseResult:
         parser_used="llamaparse",
         parse_duration_seconds=2.5,
     )
-    
+
     table = ParsedTable(
         page_number=2,
         markdown="""| Name | Role | Equity |
@@ -140,7 +139,7 @@ def sample_parse_result(sample_document_id) -> ParseResult:
         ],
         caption="Cap Table",
     )
-    
+
     full_text = """
 # EMPLOYMENT AGREEMENT
 
@@ -177,7 +176,7 @@ Either party may terminate this Agreement with 90 days written notice.
 
 Employee agrees to maintain strict confidentiality of all Company information.
 """
-    
+
     return ParseResult(
         metadata=metadata,
         full_text=full_text,
@@ -236,7 +235,7 @@ def sample_chunks(sample_document_id) -> list[DocumentChunk]:
 def sample_entities(sample_document_id) -> list[Entity]:
     """Sample entities for testing conflict detection."""
     chunk_id = uuid4()
-    
+
     return [
         Entity(
             entity_type=EntityType.PERSON,
@@ -285,7 +284,7 @@ def sample_entities(sample_document_id) -> list[Entity]:
 def conflicting_entities() -> tuple[list[Entity], list[Entity]]:
     """
     Two sets of entities with conflicts for testing.
-    
+
     Document A says: $500,000 salary, 5% equity, January 1, 2024
     Document B says: $450,000 salary, 8% equity, March 15, 2024
     """
@@ -293,7 +292,7 @@ def conflicting_entities() -> tuple[list[Entity], list[Entity]]:
     doc_b_id = uuid4()
     chunk_a_id = uuid4()
     chunk_b_id = uuid4()
-    
+
     entities_a = [
         Entity(
             entity_type=EntityType.SALARY,
@@ -326,7 +325,7 @@ def conflicting_entities() -> tuple[list[Entity], list[Entity]]:
             confidence=0.95,
         ),
     ]
-    
+
     entities_b = [
         Entity(
             entity_type=EntityType.SALARY,
@@ -359,7 +358,7 @@ def conflicting_entities() -> tuple[list[Entity], list[Entity]]:
             confidence=0.93,
         ),
     ]
-    
+
     return entities_a, entities_b
 
 
@@ -371,7 +370,7 @@ def conflicting_entities() -> tuple[list[Entity], list[Entity]]:
 def vector_store(temp_chroma_dir):
     """Create a real VectorStore for testing."""
     from src.knowledge.vector_store import VectorStore, VectorStoreConfig
-    
+
     config = VectorStoreConfig(
         persist_directory=temp_chroma_dir,
         collection_name="test_collection",
@@ -383,7 +382,7 @@ def vector_store(temp_chroma_dir):
 def graph_store(temp_graph_path):
     """Create a real GraphStore for testing."""
     from src.knowledge.graph_store import GraphStore
-    
+
     return GraphStore(persist_path=temp_graph_path)
 
 
@@ -392,8 +391,8 @@ def populated_stores(vector_store, graph_store, sample_chunks, sample_entities):
     """Stores pre-populated with test data."""
     # Add chunks to vector store
     vector_store.add_chunks(sample_chunks)
-    
+
     # Add entities to graph store
     graph_store.add_entities(sample_entities)
-    
+
     return vector_store, graph_store

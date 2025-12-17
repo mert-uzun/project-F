@@ -10,24 +10,23 @@ The Comparator Agent finds potential conflicts between documents by:
 This is the "detection" half of the conflict detection pipeline.
 """
 
-import asyncio
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from src.agents.schemas import (
+    ComparisonQuery,
     Conflict,
     ConflictEvidence,
     ConflictSeverity,
     ConflictStatus,
     ConflictType,
-    ComparisonQuery,
     SourceCitation,
 )
 from src.knowledge.graph_store import GraphStore
-from src.knowledge.vector_store import VectorStore, SearchResult
-from src.knowledge.schemas import Entity, EntityType, RelationshipType
+from src.knowledge.schemas import Entity, EntityType
+from src.knowledge.vector_store import SearchResult, VectorStore
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -72,7 +71,7 @@ Respond in JSON format with a "conflicts" array.
 
 class DetectedConflict(BaseModel):
     """LLM output schema for detected conflict."""
-    
+
     conflict_type: str
     severity: str
     value_a: str
@@ -83,7 +82,7 @@ class DetectedConflict(BaseModel):
 
 class ConflictDetectionOutput(BaseModel):
     """LLM output schema."""
-    
+
     conflicts: list[DetectedConflict] = Field(default_factory=list)
     summary: str = ""
 
@@ -95,15 +94,15 @@ class ConflictDetectionOutput(BaseModel):
 class ComparatorAgent:
     """
     Agent that detects conflicts between documents.
-    
-    The Comparator uses both semantic search (vector store) and 
+
+    The Comparator uses both semantic search (vector store) and
     relationship analysis (graph store) to find potential conflicts.
-    
+
     Usage:
         comparator = ComparatorAgent(vector_store, graph_store)
         conflicts = await comparator.compare(query)
     """
-    
+
     def __init__(
         self,
         vector_store: VectorStore,
@@ -112,7 +111,7 @@ class ComparatorAgent:
     ) -> None:
         """
         Initialize the Comparator Agent.
-        
+
         Args:
             vector_store: Vector store for semantic search
             graph_store: Graph store for relationship queries
@@ -121,7 +120,7 @@ class ComparatorAgent:
         self.vector_store = vector_store
         self.graph_store = graph_store
         self._llm = llm
-    
+
     @property
     def llm(self) -> Any:
         """Get LLM instance."""
@@ -129,53 +128,53 @@ class ComparatorAgent:
             from src.utils.llm_factory import get_llm
             self._llm = get_llm()
         return self._llm
-    
+
     async def compare(self, query: ComparisonQuery) -> list[Conflict]:
         """
         Compare documents and detect conflicts.
-        
+
         Args:
             query: Comparison query with document IDs and focus areas
-            
+
         Returns:
             List of detected conflicts
         """
         logger.info(f"Starting comparison for {len(query.document_ids)} documents")
-        
+
         all_conflicts: list[Conflict] = []
-        
+
         # 1. Find entity-based conflicts
         entity_conflicts = await self._find_entity_conflicts(query)
         all_conflicts.extend(entity_conflicts)
-        
+
         # 2. Find semantic conflicts (via LLM comparison)
         semantic_conflicts = await self._find_semantic_conflicts(query)
         all_conflicts.extend(semantic_conflicts)
-        
+
         # 3. Filter by confidence
         filtered = [c for c in all_conflicts if c.confidence >= query.min_confidence]
-        
+
         # 4. Filter by severity if requested
         if not query.include_low_severity:
             filtered = [c for c in filtered if c.severity != ConflictSeverity.LOW]
-        
+
         logger.info(f"Found {len(filtered)} conflicts (from {len(all_conflicts)} candidates)")
-        
+
         return filtered
-    
+
     async def _find_entity_conflicts(self, query: ComparisonQuery) -> list[Conflict]:
         """
         Find conflicts by comparing extracted entities.
-        
+
         Looks for:
         - Same entity type with different values across documents
         - Salary/equity/percentage mismatches
         """
         conflicts: list[Conflict] = []
-        
+
         # Get entities grouped by document
         doc_entities: dict[UUID, list[Entity]] = {}
-        
+
         for doc_id in query.document_ids:
             entities = []
             # Find all entities from this document
@@ -183,24 +182,24 @@ class ComparatorAgent:
                 found = self.graph_store.find_entities_by_type(entity_type, doc_id)
                 entities.extend([node.entity for node in found])
             doc_entities[doc_id] = entities
-        
+
         # Compare entities across documents
         doc_ids = list(query.document_ids)
-        
+
         for i in range(len(doc_ids)):
             for j in range(i + 1, len(doc_ids)):
                 doc_a, doc_b = doc_ids[i], doc_ids[j]
                 entities_a = doc_entities.get(doc_a, [])
                 entities_b = doc_entities.get(doc_b, [])
-                
+
                 # Find conflicts between these two documents
                 pair_conflicts = self._compare_entity_sets(
                     entities_a, entities_b, query.focus_areas
                 )
                 conflicts.extend(pair_conflicts)
-        
+
         return conflicts
-    
+
     def _compare_entity_sets(
         self,
         entities_a: list[Entity],
@@ -209,16 +208,16 @@ class ComparatorAgent:
     ) -> list[Conflict]:
         """Compare two sets of entities for conflicts."""
         conflicts: list[Conflict] = []
-        
+
         # Group entities by type for easier comparison
         by_type_a: dict[EntityType, list[Entity]] = {}
         by_type_b: dict[EntityType, list[Entity]] = {}
-        
+
         for e in entities_a:
             by_type_a.setdefault(e.entity_type, []).append(e)
         for e in entities_b:
             by_type_b.setdefault(e.entity_type, []).append(e)
-        
+
         # Check monetary amounts
         if "salary" in focus_areas or "amount" in focus_areas:
             conflicts.extend(self._compare_monetary_values(
@@ -229,23 +228,23 @@ class ComparatorAgent:
                 by_type_a.get(EntityType.SALARY, []),
                 by_type_b.get(EntityType.SALARY, []),
             ))
-        
+
         # Check percentages/equity
         if "equity" in focus_areas or "percentage" in focus_areas:
             conflicts.extend(self._compare_percentage_values(
                 by_type_a.get(EntityType.PERCENTAGE, []) + by_type_a.get(EntityType.EQUITY, []),
                 by_type_b.get(EntityType.PERCENTAGE, []) + by_type_b.get(EntityType.EQUITY, []),
             ))
-        
+
         # Check dates
         if "dates" in focus_areas:
             conflicts.extend(self._compare_date_values(
                 by_type_a.get(EntityType.DATE, []),
                 by_type_b.get(EntityType.DATE, []),
             ))
-        
+
         return conflicts
-    
+
     def _compare_monetary_values(
         self,
         amounts_a: list[Entity],
@@ -253,22 +252,22 @@ class ComparatorAgent:
     ) -> list[Conflict]:
         """Compare monetary amounts for mismatches."""
         conflicts: list[Conflict] = []
-        
+
         for a in amounts_a:
             for b in amounts_b:
                 # Check if these might be referring to the same thing
                 # by comparing normalized values
                 norm_a = self._normalize_amount(a.normalized_value or a.value)
                 norm_b = self._normalize_amount(b.normalized_value or b.value)
-                
+
                 if norm_a is None or norm_b is None:
                     continue
-                
+
                 # If values are different, it's a potential conflict
                 if norm_a != norm_b:
                     # Calculate difference
                     diff_pct = abs(norm_a - norm_b) / max(norm_a, norm_b) * 100
-                    
+
                     # Determine severity based on difference
                     if diff_pct >= 50:
                         severity = ConflictSeverity.CRITICAL
@@ -278,7 +277,7 @@ class ComparatorAgent:
                         severity = ConflictSeverity.MEDIUM
                     else:
                         severity = ConflictSeverity.LOW
-                    
+
                     conflicts.append(Conflict(
                         conflict_type=ConflictType.AMOUNT_MISMATCH,
                         severity=severity,
@@ -317,9 +316,9 @@ class ComparatorAgent:
                         difference=f"{diff_pct:.1f}%",
                         confidence=min(a.confidence, b.confidence) * 0.9,
                     ))
-        
+
         return conflicts
-    
+
     def _compare_percentage_values(
         self,
         pcts_a: list[Entity],
@@ -327,18 +326,18 @@ class ComparatorAgent:
     ) -> list[Conflict]:
         """Compare percentage/equity values."""
         conflicts: list[Conflict] = []
-        
+
         for a in pcts_a:
             for b in pcts_b:
                 pct_a = self._normalize_percentage(a.normalized_value or a.value)
                 pct_b = self._normalize_percentage(b.normalized_value or b.value)
-                
+
                 if pct_a is None or pct_b is None:
                     continue
-                
+
                 if pct_a != pct_b:
                     diff = abs(pct_a - pct_b)
-                    
+
                     if diff > 10:
                         severity = ConflictSeverity.CRITICAL
                     elif diff > 5:
@@ -347,7 +346,7 @@ class ComparatorAgent:
                         severity = ConflictSeverity.MEDIUM
                     else:
                         severity = ConflictSeverity.LOW
-                    
+
                     conflicts.append(Conflict(
                         conflict_type=ConflictType.PERCENTAGE_MISMATCH,
                         severity=severity,
@@ -386,9 +385,9 @@ class ComparatorAgent:
                         difference=f"{diff:.1f}pp",
                         confidence=min(a.confidence, b.confidence) * 0.9,
                     ))
-        
+
         return conflicts
-    
+
     def _compare_date_values(
         self,
         dates_a: list[Entity],
@@ -396,21 +395,21 @@ class ComparatorAgent:
     ) -> list[Conflict]:
         """Compare date values for timeline conflicts."""
         conflicts: list[Conflict] = []
-        
+
         for a in dates_a:
             for b in dates_b:
                 date_a = self._parse_date(a.normalized_value or a.value)
                 date_b = self._parse_date(b.normalized_value or b.value)
-                
+
                 if date_a is None or date_b is None:
                     continue
-                
+
                 # Calculate difference in days
                 diff_days = abs((date_a - date_b).days)
-                
+
                 if diff_days == 0:
                     continue  # Same date, no conflict
-                
+
                 # Determine severity based on difference
                 if diff_days > 365:
                     severity = ConflictSeverity.CRITICAL
@@ -420,7 +419,7 @@ class ComparatorAgent:
                     severity = ConflictSeverity.MEDIUM
                 else:
                     severity = ConflictSeverity.LOW
-                
+
                 conflicts.append(Conflict(
                     conflict_type=ConflictType.DATE_CONFLICT,
                     severity=severity,
@@ -459,14 +458,14 @@ class ComparatorAgent:
                     difference=f"{diff_days} days",
                     confidence=min(a.confidence, b.confidence) * 0.85,
                 ))
-        
+
         return conflicts
-    
+
     def _parse_date(self, value: str) -> "date | None":
         """Parse a date string into a date object."""
-        from datetime import date, datetime
         import re
-        
+        from datetime import date, datetime
+
         # Try common date formats
         formats = [
             "%Y-%m-%d",          # 2024-01-15
@@ -478,38 +477,38 @@ class ComparatorAgent:
             "%d %b %Y",          # 15 Jan 2024
             "%Y/%m/%d",          # 2024/01/15
         ]
-        
+
         cleaned = value.strip()
-        
+
         for fmt in formats:
             try:
                 return datetime.strptime(cleaned, fmt).date()
             except ValueError:
                 continue
-        
+
         # Try to extract year at minimum
         year_match = re.search(r'\b(19|20)\d{2}\b', cleaned)
         if year_match:
             year = int(year_match.group())
             # Default to January 1 if only year found
             return date(year, 1, 1)
-        
+
         return None
-    
+
     async def _find_semantic_conflicts(self, query: ComparisonQuery) -> list[Conflict]:
         """
         Find conflicts using LLM semantic comparison.
-        
+
         Queries the vector store for related content and uses LLM
         to identify subtle conflicts.
         """
         conflicts: list[Conflict] = []
-        
+
         # Build search queries from focus areas
         search_queries = []
         if query.specific_query:
             search_queries.append(query.specific_query)
-        
+
         for area in query.focus_areas:
             if area == "salary":
                 search_queries.append("compensation salary base pay annual")
@@ -519,34 +518,34 @@ class ComparatorAgent:
                 search_queries.append("effective date start termination expiry")
             elif area == "parties":
                 search_queries.append("parties agreement between company employee")
-        
+
         # For each document pair, find related chunks and compare
         doc_ids = list(query.document_ids)
-        
+
         for search_query in search_queries[:3]:  # Limit queries
             for i in range(len(doc_ids)):
                 for j in range(i + 1, len(doc_ids)):
                     # Get relevant chunks from each document
                     chunks_a = self.vector_store.search(
-                        search_query, 
-                        top_k=3, 
+                        search_query,
+                        top_k=3,
                         filter_document_id=doc_ids[i]
                     )
                     chunks_b = self.vector_store.search(
-                        search_query, 
-                        top_k=3, 
+                        search_query,
+                        top_k=3,
                         filter_document_id=doc_ids[j]
                     )
-                    
+
                     if chunks_a and chunks_b:
                         # Use LLM to compare
                         llm_conflicts = await self._llm_compare(
                             chunks_a, chunks_b, doc_ids[i], doc_ids[j]
                         )
                         conflicts.extend(llm_conflicts)
-        
+
         return conflicts
-    
+
     async def _llm_compare(
         self,
         chunks_a: list[SearchResult],
@@ -556,45 +555,45 @@ class ComparatorAgent:
     ) -> list[Conflict]:
         """Use LLM to compare chunks and find conflicts."""
         import json
-        
+
         # Build context
         context_a = "\n\n".join([c.content for c in chunks_a])
         context_b = "\n\n".join([c.content for c in chunks_b])
-        
+
         prompt = CONFLICT_DETECTION_PROMPT.format(
             context_a=context_a[:2000],
             context_b=context_b[:2000],
         )
-        
+
         try:
             response = await self.llm.acomplete(prompt)
             text = response.text.strip()
-            
+
             # Parse JSON from response
             if "```json" in text:
                 text = text.split("```json")[1].split("```")[0].strip()
             elif "```" in text:
                 text = text.split("```")[1].split("```")[0].strip()
-            
+
             data = json.loads(text)
             output = ConflictDetectionOutput.model_validate(data)
-            
+
             # Convert to Conflict objects
             conflicts: list[Conflict] = []
-            
+
             for detected in output.conflicts:
                 # Map conflict type
                 try:
                     conflict_type = ConflictType(detected.conflict_type.lower().replace(" ", "_"))
                 except ValueError:
                     conflict_type = ConflictType.LOGICAL_INCONSISTENCY
-                
+
                 # Map severity
                 try:
                     severity = ConflictSeverity(detected.severity.lower())
                 except ValueError:
                     severity = ConflictSeverity.MEDIUM
-                
+
                 # Create placeholder entities for LLM-detected conflicts
                 entity_a = Entity(
                     entity_type=EntityType.OTHER,
@@ -605,7 +604,7 @@ class ComparatorAgent:
                     source_text=context_a[:200],
                     confidence=detected.confidence,
                 )
-                
+
                 entity_b = Entity(
                     entity_type=EntityType.OTHER,
                     value=detected.value_b[:100],
@@ -615,7 +614,7 @@ class ComparatorAgent:
                     source_text=context_b[:200],
                     confidence=detected.confidence,
                 )
-                
+
                 conflicts.append(Conflict(
                     conflict_type=conflict_type,
                     severity=severity,
@@ -648,27 +647,27 @@ class ComparatorAgent:
                     value_b=detected.value_b,
                     confidence=detected.confidence,
                 ))
-            
+
             return conflicts
-            
+
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse LLM conflict output: {e}")
             return []
         except Exception as e:
             logger.error(f"LLM comparison failed: {e}")
             return []
-    
+
     # ========================================================================
     # Utility methods
     # ========================================================================
-    
+
     def _normalize_amount(self, value: str) -> float | None:
         """Normalize monetary amount to float."""
         import re
-        
+
         # Remove currency symbols and commas
         cleaned = re.sub(r"[,$£€¥]", "", value)
-        
+
         # Handle K/M/B suffixes
         multiplier = 1
         if cleaned.lower().endswith("k"):
@@ -680,19 +679,19 @@ class ComparatorAgent:
         elif cleaned.lower().endswith("b"):
             multiplier = 1_000_000_000
             cleaned = cleaned[:-1]
-        
+
         try:
             return float(cleaned) * multiplier
         except ValueError:
             return None
-    
+
     def _normalize_percentage(self, value: str) -> float | None:
         """Normalize percentage to float."""
         import re
-        
+
         # Remove % sign
         cleaned = re.sub(r"[%]", "", value).strip()
-        
+
         try:
             return float(cleaned)
         except ValueError:

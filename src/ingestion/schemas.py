@@ -35,7 +35,7 @@ class TableCell(BaseModel):
 class ParsedTable(BaseModel):
     """
     A table extracted from a document.
-    
+
     Tables are extracted as markdown for LLM consumption,
     but we also store structured data for programmatic access.
     """
@@ -46,12 +46,12 @@ class ParsedTable(BaseModel):
     headers: list[str] = Field(default_factory=list, description="Column headers")
     rows: list[list[str]] = Field(default_factory=list, description="Table rows as 2D list")
     caption: str | None = Field(default=None, description="Table caption if detected")
-    
+
     @property
     def num_rows(self) -> int:
         """Number of data rows (excluding header)."""
         return len(self.rows)
-    
+
     @property
     def num_cols(self) -> int:
         """Number of columns."""
@@ -71,7 +71,7 @@ class DocumentMetadata(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Parse timestamp")
     parser_used: str = Field(..., description="Parser used (llamaparse, unstructured)")
     parse_duration_seconds: float = Field(default=0.0, ge=0, description="Time to parse")
-    
+
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
     )
@@ -95,14 +95,14 @@ class ChunkMetadata(BaseModel):
 class DocumentChunk(BaseModel):
     """
     A chunk of document text ready for embedding.
-    
+
     Chunks preserve semantic boundaries and include rich metadata
     for citation and source tracking.
     """
 
     content: str = Field(..., min_length=1, description="Chunk text content")
     metadata: ChunkMetadata = Field(..., description="Chunk metadata")
-    
+
     @property
     def token_estimate(self) -> int:
         """Rough token estimate (4 chars per token)."""
@@ -117,7 +117,7 @@ class ParseResult(BaseModel):
     tables: list[ParsedTable] = Field(default_factory=list, description="Extracted tables")
     chunks: list[DocumentChunk] = Field(default_factory=list, description="Semantic chunks")
     errors: list[str] = Field(default_factory=list, description="Any parsing errors/warnings")
-    
+
     @property
     def success(self) -> bool:
         """Whether parsing completed without critical errors."""
@@ -127,7 +127,7 @@ class ParseResult(BaseModel):
 class EntityExtraction(BaseModel):
     """
     Structured entity extracted from document.
-    
+
     This is the foundation of our Knowledge Graph.
     Every assertion must have a source citation.
     """
@@ -139,7 +139,7 @@ class EntityExtraction(BaseModel):
     source_chunk_id: UUID = Field(..., description="Source chunk ID for citation")
     source_page: int = Field(..., ge=1, description="Page number for citation")
     context: str = Field(..., description="Surrounding context for verification")
-    
+
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
     )

@@ -11,10 +11,10 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-from src.agents.multi_doc_analyzer import MultiDocReport, MultiDocConflict
-from src.agents.reference_detector import MissingDocumentReport, DocumentReference
-from src.knowledge.timeline_builder import Timeline, TimelineEvent, TimelineConflict
+from src.agents.multi_doc_analyzer import MultiDocConflict, MultiDocReport
+from src.agents.reference_detector import MissingDocumentReport
 from src.agents.schemas import ConflictSeverity
+from src.knowledge.timeline_builder import Timeline
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -104,24 +104,24 @@ Format as JSON with keys: description, impact, action
 
 class ExecutiveSummary(BaseModel):
     """Generated executive summary memorandum."""
-    
+
     summary_id: UUID = Field(default_factory=uuid4)
-    
+
     # Content
     summary_markdown: str = Field(..., description="Full summary in markdown")
-    
+
     # Extracted highlights
     key_findings: list[str] = Field(default_factory=list)
     critical_issues: list[str] = Field(default_factory=list)
     action_items: list[str] = Field(default_factory=list)
-    
+
     # Metadata
     document_count: int = 0
     conflict_count: int = 0
     generated_at: datetime = Field(default_factory=datetime.utcnow)
     model_used: str = ""
     generation_time_seconds: float = 0.0
-    
+
     @property
     def has_critical_issues(self) -> bool:
         return len(self.critical_issues) > 0
@@ -129,7 +129,7 @@ class ExecutiveSummary(BaseModel):
 
 class ReportConfig(BaseModel):
     """Configuration for report generation."""
-    
+
     include_timeline: bool = True
     include_missing_docs: bool = True
     max_issues_per_section: int = 10
@@ -144,24 +144,24 @@ class ReportConfig(BaseModel):
 class ReportGenerator:
     """
     Generate executive summaries and formal reports.
-    
+
     Uses LLM to synthesize findings into partner-ready memoranda
     following investment banking conventions.
-    
+
     Usage:
         generator = ReportGenerator()
         summary = await generator.generate_executive_summary(report)
     """
-    
+
     def __init__(self, llm: Any = None) -> None:
         """
         Initialize the Report Generator.
-        
+
         Args:
             llm: Optional LLM instance (lazy-loaded if not provided)
         """
         self._llm = llm
-    
+
     @property
     def llm(self):
         """Lazy-load LLM."""
@@ -172,7 +172,7 @@ class ReportGenerator:
             except Exception as e:
                 logger.warning(f"Could not load LLM: {e}")
         return self._llm
-    
+
     async def generate_executive_summary(
         self,
         multi_doc_report: MultiDocReport,
@@ -182,40 +182,40 @@ class ReportGenerator:
     ) -> ExecutiveSummary:
         """
         Generate an executive summary memorandum.
-        
+
         Args:
             multi_doc_report: Multi-document analysis results
             missing_doc_report: Optional missing document findings
             timeline: Optional timeline analysis
             config: Report configuration
-            
+
         Returns:
             ExecutiveSummary with formatted memorandum
         """
         import time
         start_time = time.time()
-        
+
         config = config or ReportConfig()
-        
+
         # Build document list
         doc_list = self._format_document_list(multi_doc_report)
-        
+
         # Categorize conflicts by severity
         critical, high, other = self._categorize_conflicts(
             multi_doc_report.conflicts,
             config.max_issues_per_section,
         )
-        
+
         # Format missing documents
         missing_summary = self._format_missing_documents(
             missing_doc_report
         ) if missing_doc_report and config.include_missing_docs else "None identified."
-        
+
         # Format timeline
         timeline_summary = self._format_timeline(
             timeline
         ) if timeline and config.include_timeline else "Not analyzed."
-        
+
         # Build prompt
         prompt = EXECUTIVE_SUMMARY_PROMPT.format(
             current_date=datetime.now().strftime("%B %d, %Y"),
@@ -234,11 +234,11 @@ class ReportGenerator:
             missing_documents=missing_summary,
             timeline_summary=timeline_summary,
         )
-        
+
         # Generate with LLM
         summary_text = ""
         model_used = "none"
-        
+
         if self.llm:
             try:
                 response = await self.llm.acomplete(prompt)
@@ -265,14 +265,14 @@ class ReportGenerator:
                 other,
             )
             model_used = "fallback"
-        
+
         # Extract highlights from summary
         key_findings = self._extract_key_findings(summary_text)
         critical_issues = [self._issue_to_string(c) for c in critical]
         action_items = self._extract_action_items(summary_text)
-        
+
         generation_time = time.time() - start_time
-        
+
         summary = ExecutiveSummary(
             summary_markdown=summary_text,
             key_findings=key_findings,
@@ -283,14 +283,14 @@ class ReportGenerator:
             model_used=model_used,
             generation_time_seconds=generation_time,
         )
-        
+
         logger.info(
             f"Generated executive summary: {len(summary_text)} chars "
             f"in {generation_time:.2f}s"
         )
-        
+
         return summary
-    
+
     def _format_document_list(self, report: MultiDocReport) -> str:
         """Format list of analyzed documents."""
         lines = []
@@ -298,7 +298,7 @@ class ReportGenerator:
             doc_name = report.document_set.get_name(doc_id)
             lines.append(f"{i}. {doc_name}")
         return "\n".join(lines)
-    
+
     def _categorize_conflicts(
         self,
         conflicts: list[MultiDocConflict],
@@ -308,7 +308,7 @@ class ReportGenerator:
         critical = []
         high = []
         other = []
-        
+
         for conflict in conflicts:
             if conflict.severity == ConflictSeverity.CRITICAL:
                 if len(critical) < max_per_category:
@@ -319,22 +319,22 @@ class ReportGenerator:
             else:
                 if len(other) < max_per_category:
                     other.append(conflict)
-        
+
         return critical, high, other
-    
+
     def _format_issues(self, conflicts: list[MultiDocConflict]) -> str:
         """Format conflicts as bullet points."""
         if not conflicts:
             return ""
-        
+
         lines = []
         for conflict in conflicts:
             lines.append(
                 f"- **{conflict.conflict_type.value}**: {conflict.description}"
             )
-        
+
         return "\n".join(lines)
-    
+
     def _format_missing_documents(
         self,
         report: MissingDocumentReport,
@@ -342,79 +342,79 @@ class ReportGenerator:
         """Format missing document references."""
         if not report or not report.missing_documents:
             return "None identified."
-        
+
         lines = []
         for ref in report.missing_documents[:10]:
             lines.append(
                 f"- **{ref.reference_text}** - Referenced in "
                 f"{ref.source_document_name}, page {ref.source_page}"
             )
-        
+
         if report.missing_count > 10:
             lines.append(f"- ...and {report.missing_count - 10} additional references")
-        
+
         return "\n".join(lines)
-    
+
     def _format_timeline(self, timeline: Timeline) -> str:
         """Format timeline summary."""
         if not timeline or not timeline.events:
             return "No timeline events identified."
-        
+
         lines = [
             f"**Date Range**: {timeline.earliest_date} to {timeline.latest_date}",
             f"**Events Identified**: {timeline.event_count}",
         ]
-        
+
         if timeline.conflicts:
             lines.append(f"**Temporal Conflicts**: {timeline.conflict_count}")
             for conflict in timeline.conflicts[:3]:
                 lines.append(f"  - {conflict.description}")
-        
+
         return "\n".join(lines)
-    
+
     def _issue_to_string(self, conflict: MultiDocConflict) -> str:
         """Convert a conflict to a string description."""
         return f"{conflict.conflict_type.value}: {conflict.title}"
-    
+
     def _extract_key_findings(self, summary_text: str) -> list[str]:
         """Extract key findings from generated summary."""
         findings = []
-        
+
         # Look for bullet points or numbered items
         import re
         patterns = [
             r"^\s*[-•]\s*(.+)$",
             r"^\s*\d+\.\s*(.+)$",
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, summary_text, re.MULTILINE)
             findings.extend(matches[:10])
-        
+
         return findings[:10]
-    
+
     def _extract_action_items(self, summary_text: str) -> list[str]:
         """Extract action items from generated summary."""
         actions = []
-        
+
         # Look for action-oriented language
         import re
-        
+
         # Find section after "Action Items" or "Recommendations"
         action_section = re.search(
             r"(?:action items|recommendations|next steps).*?$(.*?)(?:\n#|\Z)",
             summary_text,
             re.IGNORECASE | re.MULTILINE | re.DOTALL,
         )
-        
+
         if action_section:
             section_text = action_section.group(1)
             # Extract bullet points
             items = re.findall(r"^\s*[-•\[\]]\s*(.+)$", section_text, re.MULTILINE)
             actions.extend(items)
-        
+
         return actions[:10]
-    
+
     def _generate_fallback_summary(
         self,
         multi_doc_report: MultiDocReport,
@@ -440,7 +440,7 @@ class ReportGenerator:
             f"{len(multi_doc_report.conflicts)} potential discrepancies requiring attention.",
             "",
         ]
-        
+
         # Critical issues
         if critical:
             lines.extend([
@@ -452,7 +452,7 @@ class ReportGenerator:
             for c in critical:
                 lines.append(f"- **{c.title}**: {c.description}")
             lines.append("")
-        
+
         # High priority
         if high:
             lines.extend([
@@ -462,7 +462,7 @@ class ReportGenerator:
             for c in high:
                 lines.append(f"- **{c.title}**: {c.description}")
             lines.append("")
-        
+
         # Missing documents
         if missing_doc_report and missing_doc_report.has_missing:
             lines.extend([
@@ -476,7 +476,7 @@ class ReportGenerator:
                     f"- {ref.reference_text} (cited in {ref.source_document_name}, p.{ref.source_page})"
                 )
             lines.append("")
-        
+
         # Timeline
         if timeline and timeline.conflicts:
             lines.extend([
@@ -486,7 +486,7 @@ class ReportGenerator:
             for tc in timeline.conflicts[:3]:
                 lines.append(f"- {tc.description}")
             lines.append("")
-        
+
         # Action items
         lines.extend([
             "## Recommended Actions",
@@ -501,9 +501,9 @@ class ReportGenerator:
             "*This report was generated by automated document analysis. "
             "All findings should be verified by qualified professionals.*",
         ])
-        
+
         return "\n".join(lines)
-    
+
     def generate_conflict_table(
         self,
         conflicts: list[MultiDocConflict],
@@ -511,12 +511,12 @@ class ReportGenerator:
         """Generate a markdown table of conflicts."""
         if not conflicts:
             return "No conflicts identified."
-        
+
         lines = [
             "| Severity | Type | Description | Documents |",
             "|----------|------|-------------|-----------|",
         ]
-        
+
         for conflict in conflicts:
             severity_icon = {
                 ConflictSeverity.CRITICAL: "🔴",
@@ -524,16 +524,16 @@ class ReportGenerator:
                 ConflictSeverity.MEDIUM: "🟡",
                 ConflictSeverity.LOW: "🟢",
             }.get(conflict.severity, "⚪")
-            
+
             lines.append(
                 f"| {severity_icon} {conflict.severity.value} | "
                 f"{conflict.conflict_type.value} | "
                 f"{conflict.title} | "
                 f"{conflict.document_count} docs |"
             )
-        
+
         return "\n".join(lines)
-    
+
     def generate_entity_matrix(
         self,
         entity_type: str,
@@ -541,31 +541,31 @@ class ReportGenerator:
     ) -> str:
         """
         Generate a matrix showing entity values per document.
-        
+
         Args:
             entity_type: Type of entity
             occurrences: Dict mapping entity value to list of (doc_name, value)
-            
+
         Returns:
             Markdown table
         """
         if not occurrences:
             return f"No {entity_type} entities found."
-        
+
         # Get all document names
         all_docs: set[str] = set()
         for values in occurrences.values():
             for doc_name, _ in values:
                 all_docs.add(doc_name)
-        
+
         doc_list = sorted(all_docs)
-        
+
         # Build header
         header = f"| {entity_type} | " + " | ".join(doc_list) + " |"
         separator = "|" + "---|" * (len(doc_list) + 1)
-        
+
         lines = [header, separator]
-        
+
         # Build rows
         for entity_value, doc_values in occurrences.items():
             doc_value_map = {d: v for d, v in doc_values}
@@ -573,5 +573,5 @@ class ReportGenerator:
             row += " | ".join(doc_value_map.get(d, "-") for d in doc_list)
             row += " |"
             lines.append(row)
-        
+
         return "\n".join(lines)

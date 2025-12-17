@@ -17,7 +17,7 @@ def format_severity_badge(severity: str) -> str:
         "low": ("#28A745", "white"),
     }
     bg_color, text_color = colors.get(severity.lower(), ("#888", "white"))
-    
+
     return f"""
     <span style="
         background-color: {bg_color};
@@ -87,12 +87,12 @@ def format_conflict_card(conflict: dict[str, Any]) -> str:
         "low": "#28A745",
     }
     border_color = severity_colors.get(severity, "#FFC107")
-    
+
     title = truncate_text(conflict.get("title", "Conflict"), 40)
     description = truncate_text(conflict.get("description", ""), 80)
     doc_count = conflict.get("document_count", 2)
     conflict_type = conflict.get("type", "value_conflict")
-    
+
     return f"""
     <div class="conflict-card" style="border-left-color: {border_color};">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -123,9 +123,9 @@ def format_log_line(log_type: str, message: str, timestamp: datetime | None = No
     """Format a reasoning log line."""
     if timestamp is None:
         timestamp = datetime.now()
-    
+
     ts_str = timestamp.strftime("%H:%M:%S.%f")[:-3]
-    
+
     return f"""
     <div class="log-line">
         <span class="log-timestamp">[{ts_str}]</span>

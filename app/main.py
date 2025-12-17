@@ -107,15 +107,15 @@ async def ingest_document(file: UploadFile = File(...)) -> dict[str, str | int]:
         logger.info(f"Created {len(parse_result.chunks)} chunks")
 
         # 4. Store in vector DB
-        vector_store = VectorStore(VectorStoreConfig(
-            persist_directory=settings.chroma_persist_dir,
-        ))
+        vector_store = VectorStore(
+            VectorStoreConfig(
+                persist_directory=settings.chroma_persist_dir,
+            )
+        )
         chunks_added = vector_store.add_chunks(parse_result.chunks)
 
         # 5. Extract entities to graph
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
-        )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         extractor = EntityExtractor()
         entity_count = 0
@@ -182,12 +182,12 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
         uuids = [UUID(doc_id) for doc_id in document_ids]
 
         # Initialize stores
-        vector_store = VectorStore(VectorStoreConfig(
-            persist_directory=settings.chroma_persist_dir,
-        ))
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
+        vector_store = VectorStore(
+            VectorStoreConfig(
+                persist_directory=settings.chroma_persist_dir,
+            )
         )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         # Create comparison query
         query = ComparisonQuery(
@@ -246,6 +246,7 @@ async def detect_conflicts(document_ids: list[str]) -> dict[str, Any]:
 # New Investment Banking Feature Endpoints
 # ============================================================================
 
+
 @app.post("/analyze")
 async def analyze_documents(document_ids: list[str]) -> dict[str, Any]:
     """
@@ -270,12 +271,12 @@ async def analyze_documents(document_ids: list[str]) -> dict[str, Any]:
         uuids = [UUID(doc_id) for doc_id in document_ids]
 
         # Initialize stores
-        vector_store = VectorStore(VectorStoreConfig(
-            persist_directory=settings.chroma_persist_dir,
-        ))
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
+        vector_store = VectorStore(
+            VectorStoreConfig(
+                persist_directory=settings.chroma_persist_dir,
+            )
         )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         # Create document set
         doc_set = DocumentSet(
@@ -341,14 +342,14 @@ async def get_timeline(document_ids: list[str]) -> dict[str, Any]:
     try:
         uuids = [UUID(doc_id) for doc_id in document_ids]
 
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
-        )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         builder = TimelineBuilder(graph_store)
         timeline = builder.build_timeline(uuids)
 
-        logger.info(f"Timeline built: {timeline.event_count} events, {timeline.conflict_count} conflicts")
+        logger.info(
+            f"Timeline built: {timeline.event_count} events, {timeline.conflict_count} conflicts"
+        )
 
         return {
             "status": "success",
@@ -415,12 +416,12 @@ async def search_entities(
     logger.info(f"Entity search: '{query}', type={entity_type}, doc={document_id}")
 
     try:
-        vector_store = VectorStore(VectorStoreConfig(
-            persist_directory=settings.chroma_persist_dir,
-        ))
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
+        vector_store = VectorStore(
+            VectorStoreConfig(
+                persist_directory=settings.chroma_persist_dir,
+            )
         )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         engine = CrossReferenceEngine(vector_store, graph_store)
 
@@ -495,12 +496,12 @@ async def generate_report(
     try:
         uuids = [UUID(doc_id) for doc_id in document_ids]
 
-        vector_store = VectorStore(VectorStoreConfig(
-            persist_directory=settings.chroma_persist_dir,
-        ))
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
+        vector_store = VectorStore(
+            VectorStoreConfig(
+                persist_directory=settings.chroma_persist_dir,
+            )
         )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         # 1. Run multi-doc analysis
         doc_set = DocumentSet(
@@ -569,9 +570,7 @@ async def get_graph_data(
     logger.info(f"Graph data requested, max_nodes={max_nodes}")
 
     try:
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
-        )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         # Parse document IDs if provided
         doc_filter = None
@@ -604,14 +603,16 @@ async def get_graph_data(
 
             color = ENTITY_COLORS.get(entity.entity_type, "#94A3B8")
 
-            nodes.append({
-                "id": node_id,
-                "label": entity.value[:30],
-                "type": entity.entity_type.value,
-                "color": color,
-                "document_id": str(entity.source_document_id),
-                "page": entity.source_page,
-            })
+            nodes.append(
+                {
+                    "id": node_id,
+                    "label": entity.value[:30],
+                    "type": entity.entity_type.value,
+                    "color": color,
+                    "document_id": str(entity.source_document_id),
+                    "page": entity.source_page,
+                }
+            )
 
         # Build edge list
         edges = []
@@ -621,11 +622,13 @@ async def get_graph_data(
                 if hasattr(rel_type, "value"):
                     rel_type = rel_type.value
 
-                edges.append({
-                    "source": source,
-                    "target": target,
-                    "type": rel_type,
-                })
+                edges.append(
+                    {
+                        "source": source,
+                        "target": target,
+                        "type": rel_type,
+                    }
+                )
 
         return {
             "status": "success",
@@ -660,9 +663,7 @@ async def get_graph_html(
     logger.info(f"Graph HTML requested, max_nodes={max_nodes}")
 
     try:
-        graph_store = GraphStore(
-            persist_path=settings.data_graphs_dir / "knowledge_graph.json"
-        )
+        graph_store = GraphStore(persist_path=settings.data_graphs_dir / "knowledge_graph.json")
 
         # Parse document IDs if provided
         doc_filter = None
@@ -716,9 +717,11 @@ async def detect_missing_documents(
     try:
         uuids = [UUID(doc_id) for doc_id in document_ids]
 
-        vector_store = VectorStore(VectorStoreConfig(
-            persist_directory=settings.chroma_persist_dir,
-        ))
+        vector_store = VectorStore(
+            VectorStoreConfig(
+                persist_directory=settings.chroma_persist_dir,
+            )
+        )
 
         detector = ReferenceDetector()
 
@@ -743,8 +746,7 @@ async def detect_missing_documents(
 
         # Build uploaded document list
         uploaded_docs = [
-            {"document_id": uid, "filename": f"Document_{str(uid)[:8]}.pdf"}
-            for uid in uuids
+            {"document_id": uid, "filename": f"Document_{str(uid)[:8]}.pdf"} for uid in uuids
         ]
 
         report = detector.find_missing_documents(all_references, uploaded_docs)

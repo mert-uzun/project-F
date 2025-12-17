@@ -4,32 +4,33 @@ FastAPI Client for Streamlit UI.
 Wraps all backend API calls.
 """
 
-import httpx
-from typing import Any
 from pathlib import Path
+from typing import Any
+
+import httpx
 
 
 class APIClient:
     """Client for the FastAPI backend."""
-    
+
     def __init__(self, base_url: str = "http://localhost:8000") -> None:
         """Initialize client with base URL."""
         self.base_url = base_url.rstrip("/")
         self.timeout = httpx.Timeout(60.0, connect=10.0)
-    
+
     def _url(self, path: str) -> str:
         """Build full URL."""
         return f"{self.base_url}{path}"
-    
+
     # === Health ===
-    
+
     def health_check(self) -> dict[str, Any]:
         """Check API health."""
         with httpx.Client(timeout=self.timeout) as client:
             response = client.get(self._url("/health"))
             response.raise_for_status()
             return response.json()
-    
+
     def is_healthy(self) -> bool:
         """Check if API is reachable."""
         try:
@@ -37,21 +38,21 @@ class APIClient:
             return result.get("status") == "healthy"
         except Exception:
             return False
-    
+
     # === Document Upload ===
-    
+
     def upload_document(self, file_path: Path | str, filename: str | None = None) -> dict[str, Any]:
         """Upload a PDF document."""
         file_path = Path(file_path)
         filename = filename or file_path.name
-        
+
         with httpx.Client(timeout=self.timeout) as client:
             with open(file_path, "rb") as f:
                 files = {"file": (filename, f, "application/pdf")}
                 response = client.post(self._url("/ingest"), files=files)
                 response.raise_for_status()
                 return response.json()
-    
+
     def upload_document_bytes(self, content: bytes, filename: str) -> dict[str, Any]:
         """Upload PDF from bytes."""
         with httpx.Client(timeout=self.timeout) as client:
@@ -59,9 +60,9 @@ class APIClient:
             response = client.post(self._url("/ingest"), files=files)
             response.raise_for_status()
             return response.json()
-    
+
     # === Analysis ===
-    
+
     def detect_conflicts(self, document_ids: list[str]) -> dict[str, Any]:
         """Run pairwise conflict detection."""
         with httpx.Client(timeout=self.timeout) as client:
@@ -71,7 +72,7 @@ class APIClient:
             )
             response.raise_for_status()
             return response.json()
-    
+
     def run_analysis(self, document_ids: list[str]) -> dict[str, Any]:
         """Run multi-document analysis."""
         with httpx.Client(timeout=self.timeout) as client:
@@ -81,9 +82,9 @@ class APIClient:
             )
             response.raise_for_status()
             return response.json()
-    
+
     # === Search ===
-    
+
     def search_entities(
         self,
         query: str,
@@ -97,14 +98,14 @@ class APIClient:
             params["entity_type"] = entity_type
         if document_id:
             params["document_id"] = document_id
-        
+
         with httpx.Client(timeout=self.timeout) as client:
             response = client.get(self._url("/search"), params=params)
             response.raise_for_status()
             return response.json()
-    
+
     # === Timeline ===
-    
+
     def get_timeline(self, document_ids: list[str]) -> dict[str, Any]:
         """Get timeline for documents."""
         with httpx.Client(timeout=self.timeout) as client:
@@ -114,9 +115,9 @@ class APIClient:
             )
             response.raise_for_status()
             return response.json()
-    
+
     # === Report ===
-    
+
     def generate_report(
         self,
         document_ids: list[str],
@@ -135,9 +136,9 @@ class APIClient:
             )
             response.raise_for_status()
             return response.json()
-    
+
     # === Graph ===
-    
+
     def get_graph_data(
         self,
         document_ids: list[str] | None = None,
@@ -147,12 +148,12 @@ class APIClient:
         params = {"max_nodes": max_nodes}
         if document_ids:
             params["document_ids"] = ",".join(document_ids)
-        
+
         with httpx.Client(timeout=self.timeout) as client:
             response = client.get(self._url("/graph"), params=params)
             response.raise_for_status()
             return response.json()
-    
+
     def get_graph_html(
         self,
         document_ids: list[str] | None = None,
@@ -162,14 +163,14 @@ class APIClient:
         params = {"max_nodes": max_nodes}
         if document_ids:
             params["document_ids"] = ",".join(document_ids)
-        
+
         with httpx.Client(timeout=self.timeout) as client:
             response = client.get(self._url("/graph/html"), params=params)
             response.raise_for_status()
             return response.text
-    
+
     # === Missing Documents ===
-    
+
     def detect_missing_documents(self, document_ids: list[str]) -> dict[str, Any]:
         """Detect referenced but not uploaded documents."""
         with httpx.Client(timeout=self.timeout) as client:

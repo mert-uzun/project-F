@@ -66,7 +66,7 @@ def render_sidebar() -> None:
     with st.sidebar:
         st.image("https://via.placeholder.com/200x50/1E3A5F/D4AF37?text=Conflict+Detector", width=200)
         st.markdown("---")
-        
+
         # Navigation
         st.subheader("📍 Navigation")
         pages = {
@@ -78,14 +78,14 @@ def render_sidebar() -> None:
             "timeline": "📅 Timeline",
             "report": "📄 Executive Summary",
         }
-        
+
         for page_id, page_name in pages.items():
             if st.button(page_name, key=f"nav_{page_id}", use_container_width=True):
                 st.session_state.current_page = page_id
                 st.rerun()
-        
+
         st.markdown("---")
-        
+
         # Document list
         st.subheader("📂 Documents")
         if st.session_state.uploaded_documents:
@@ -99,7 +99,7 @@ def render_sidebar() -> None:
 def render_main_content() -> None:
     """Render main content based on current page."""
     page = st.session_state.current_page
-    
+
     if page == "upload":
         from ui.components.upload import render_upload
         render_upload()

@@ -11,30 +11,30 @@ Plus multi-document analysis, reference detection, and report generation.
 from src.agents.comparator import ComparatorAgent
 from src.agents.judge import JudgeAgent, detect_and_verify
 from src.agents.multi_doc_analyzer import (
-    MultiDocAnalyzer,
-    MultiDocReport,
-    MultiDocConflict,
     DocumentSet,
     EntityVariation,
+    MultiDocAnalyzer,
+    MultiDocConflict,
+    MultiDocReport,
 )
 from src.agents.reference_detector import (
-    ReferenceDetector,
     DocumentReference,
     MissingDocumentReport,
+    ReferenceDetector,
 )
 from src.agents.report_generator import (
-    ReportGenerator,
     ExecutiveSummary,
     ReportConfig,
+    ReportGenerator,
 )
 from src.agents.schemas import (
+    ComparisonQuery,
     Conflict,
     ConflictEvidence,
     ConflictReport,
     ConflictSeverity,
     ConflictStatus,
     ConflictType,
-    ComparisonQuery,
     RedFlag,
     SourceCitation,
     VerificationResult,

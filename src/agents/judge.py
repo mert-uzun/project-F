@@ -11,7 +11,6 @@ This is the "verification" half of the conflict detection pipeline.
 The Judge prevents hallucinated or spurious conflicts from reaching the report.
 """
 
-import asyncio
 from typing import Any
 from uuid import UUID
 
@@ -84,7 +83,7 @@ Respond in JSON format:
 
 class VerificationOutput(BaseModel):
     """LLM output schema for verification."""
-    
+
     is_valid: bool = Field(..., description="Is this a real conflict?")
     confidence: float = Field(0.8, ge=0.0, le=1.0)
     reasoning: str = Field(..., description="Detailed reasoning")
@@ -100,15 +99,15 @@ class VerificationOutput(BaseModel):
 class JudgeAgent:
     """
     Agent that verifies conflicts and generates the final report.
-    
+
     The Judge acts as a "second opinion" to filter out false positives
     and ensure only real conflicts reach the final report.
-    
+
     Usage:
         judge = JudgeAgent(vector_store, graph_store)
         report = await judge.verify_and_report(conflicts, query)
     """
-    
+
     def __init__(
         self,
         vector_store: VectorStore,
@@ -117,7 +116,7 @@ class JudgeAgent:
     ) -> None:
         """
         Initialize the Judge Agent.
-        
+
         Args:
             vector_store: Vector store for additional context
             graph_store: Graph store for relationship context
@@ -126,7 +125,7 @@ class JudgeAgent:
         self.vector_store = vector_store
         self.graph_store = graph_store
         self._llm = llm
-    
+
     @property
     def llm(self) -> Any:
         """Get LLM instance."""
@@ -134,7 +133,7 @@ class JudgeAgent:
             from src.utils.llm_factory import get_llm
             self._llm = get_llm()
         return self._llm
-    
+
     async def verify_and_report(
         self,
         conflicts: list[Conflict],
@@ -143,24 +142,24 @@ class JudgeAgent:
     ) -> ConflictReport:
         """
         Verify conflicts and generate the final report.
-        
+
         Args:
             conflicts: Conflicts detected by Comparator
             document_ids: IDs of documents compared
             document_names: Names of documents compared
-            
+
         Returns:
             Final ConflictReport with verified red flags
         """
         logger.info(f"Judge verifying {len(conflicts)} conflicts")
-        
+
         # Verify each conflict
         verified_conflicts: list[tuple[Conflict, VerificationResult]] = []
         rejected_count = 0
-        
+
         for conflict in conflicts:
             result = await self.verify_conflict(conflict)
-            
+
             if result.is_valid:
                 # Update conflict status
                 conflict.status = result.updated_status
@@ -176,24 +175,24 @@ class JudgeAgent:
                 conflict.is_false_positive = True
                 conflict.verification_notes = result.reasoning
                 rejected_count += 1
-        
+
         logger.info(
             f"Verification complete: {len(verified_conflicts)} verified, "
             f"{rejected_count} rejected"
         )
-        
+
         # Generate red flags from verified conflicts
         red_flags = [
             self._create_red_flag(conflict, result)
             for conflict, result in verified_conflicts
         ]
-        
+
         # Sort by severity and priority
         red_flags.sort(key=lambda f: (
             self._severity_order(f.conflict.severity),
             f.priority,
         ))
-        
+
         # Create the report
         report = ConflictReport(
             document_ids=document_ids,
@@ -203,26 +202,26 @@ class JudgeAgent:
             total_rejected=rejected_count,
             red_flags=red_flags,
         )
-        
+
         logger.info(f"Generated report: {report.to_summary()}")
-        
+
         return report
-    
+
     async def verify_conflict(self, conflict: Conflict) -> VerificationResult:
         """
         Verify a single conflict.
-        
+
         Args:
             conflict: The conflict to verify
-            
+
         Returns:
             VerificationResult with decision and reasoning
         """
         logger.debug(f"Verifying conflict: {conflict.title}")
-        
+
         # Get additional context from vector store
         additional_context = await self._get_additional_context(conflict)
-        
+
         # Build verification prompt
         prompt = VERIFICATION_PROMPT.format(
             conflict_type=conflict.conflict_type.value,
@@ -236,23 +235,23 @@ class JudgeAgent:
             page_b=conflict.evidence_b.citation.page_number,
             additional_context=additional_context,
         )
-        
+
         try:
             # Call LLM for verification
             response = await self.llm.acomplete(prompt)
             text = response.text.strip()
-            
+
             # Parse JSON response
             import json
-            
+
             if "```json" in text:
                 text = text.split("```json")[1].split("```")[0].strip()
             elif "```" in text:
                 text = text.split("```")[1].split("```")[0].strip()
-            
+
             data = json.loads(text)
             output = VerificationOutput.model_validate(data)
-            
+
             # Determine status
             if output.is_valid:
                 if output.confidence >= 0.8:
@@ -261,7 +260,7 @@ class JudgeAgent:
                     status = ConflictStatus.NEEDS_REVIEW
             else:
                 status = ConflictStatus.REJECTED
-            
+
             return VerificationResult(
                 conflict_id=conflict.conflict_id,
                 is_valid=output.is_valid,
@@ -272,7 +271,7 @@ class JudgeAgent:
                 additional_context=additional_context[:500] if additional_context else None,
                 recommendations=output.recommendations,
             )
-            
+
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse verification output: {e}")
             # Default to needs review if LLM output is unparseable
@@ -294,7 +293,7 @@ class JudgeAgent:
                 updated_status=ConflictStatus.NEEDS_REVIEW,
                 recommendations=["Manual review required due to system error"],
             )
-    
+
     async def _get_additional_context(self, conflict: Conflict) -> str:
         """Get additional context from vector store for verification."""
         # Search for related content
@@ -302,9 +301,9 @@ class JudgeAgent:
             conflict.value_a,
             conflict.value_b,
         ]
-        
+
         additional_chunks: list[str] = []
-        
+
         for query in search_queries:
             results = self.vector_store.search(query, top_k=2)
             for result in results:
@@ -312,9 +311,9 @@ class JudgeAgent:
                 if result.content not in conflict.evidence_a.citation.excerpt:
                     if result.content not in conflict.evidence_b.citation.excerpt:
                         additional_chunks.append(f"[Page {result.metadata.get('page_number', '?')}]: {result.content[:300]}")
-        
+
         return "\n\n".join(additional_chunks[:3]) if additional_chunks else "No additional context found."
-    
+
     def _create_red_flag(
         self,
         conflict: Conflict,
@@ -323,7 +322,7 @@ class JudgeAgent:
         """Create a RedFlag from verified conflict."""
         # Generate summary
         summary = f"{conflict.conflict_type.value.replace('_', ' ').title()}: {conflict.value_a} vs {conflict.value_b}"
-        
+
         # Generate impact based on severity
         impact_map = {
             ConflictSeverity.CRITICAL: "Critical risk - could affect deal terms or valuation",
@@ -332,7 +331,7 @@ class JudgeAgent:
             ConflictSeverity.LOW: "Low risk - minor discrepancy to note",
         }
         impact = impact_map.get(conflict.severity, "Impact unknown")
-        
+
         # Generate recommended action
         if verification.recommendations:
             recommended_action = verification.recommendations[0]
@@ -344,7 +343,7 @@ class JudgeAgent:
                 ConflictSeverity.LOW: "Note for awareness, no action needed",
             }
             recommended_action = action_map.get(conflict.severity, "Review manually")
-        
+
         # Determine priority (1 = highest)
         priority_map = {
             ConflictSeverity.CRITICAL: 1,
@@ -353,7 +352,7 @@ class JudgeAgent:
             ConflictSeverity.LOW: 4,
         }
         priority = priority_map.get(conflict.severity, 5)
-        
+
         return RedFlag(
             conflict=conflict,
             verification=verification,
@@ -362,7 +361,7 @@ class JudgeAgent:
             recommended_action=recommended_action,
             priority=priority,
         )
-    
+
     def _severity_order(self, severity: ConflictSeverity) -> int:
         """Get sort order for severity (lower = more severe)."""
         order = {
@@ -387,36 +386,36 @@ async def detect_and_verify(
 ) -> ConflictReport:
     """
     Full conflict detection pipeline: Comparator → Judge → Report.
-    
+
     Args:
         document_ids: Documents to compare
         document_names: Document filenames
         vector_store: Vector store instance
         graph_store: Graph store instance
         focus_areas: Areas to focus on
-        
+
     Returns:
         Final ConflictReport
     """
     from src.agents.comparator import ComparatorAgent
     from src.agents.schemas import ComparisonQuery
-    
+
     # Create query
     query = ComparisonQuery(
         document_ids=document_ids,
         focus_areas=focus_areas or ["salary", "equity", "dates", "parties"],
     )
-    
+
     # Run Comparator
     comparator = ComparatorAgent(vector_store, graph_store)
     conflicts = await comparator.compare(query)
-    
+
     # Run Judge
     judge = JudgeAgent(vector_store, graph_store)
     report = await judge.verify_and_report(
-        conflicts, 
-        document_ids, 
+        conflicts,
+        document_ids,
         document_names
     )
-    
+
     return report

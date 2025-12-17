@@ -9,10 +9,10 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from llama_index.core import Settings as LlamaSettings
-from llama_index.core.llms import LLM
 from llama_index.core.embeddings import BaseEmbedding
+from llama_index.core.llms import LLM
 
-from app.config import get_settings, LLMBackend, EmbeddingBackend
+from app.config import EmbeddingBackend, LLMBackend, get_settings
 from src.utils.logger import get_logger
 
 if TYPE_CHECKING:
@@ -35,12 +35,12 @@ def _create_openai_llm(settings: "Settings") -> LLM:
         raise LLMFactoryError(
             "OpenAI LLM not installed. Run: pip install llama-index-llms-openai"
         ) from e
-    
+
     if not settings.openai_api_key:
         raise LLMFactoryError(
             "OPENAI_API_KEY not set. Required when llm_backend='openai'"
         )
-    
+
     logger.info(f"Initializing OpenAI LLM with model: {settings.openai_model}")
     return OpenAI(
         model=settings.openai_model,
@@ -56,7 +56,7 @@ def _create_ollama_llm(settings: "Settings") -> LLM:
         raise LLMFactoryError(
             "Ollama LLM not installed. Run: pip install llama-index-llms-ollama"
         ) from e
-    
+
     logger.info(
         f"Initializing Ollama LLM with model: {settings.ollama_model} "
         f"at {settings.ollama_base_url}"
@@ -77,7 +77,7 @@ def _create_huggingface_embedding(settings: "Settings") -> BaseEmbedding:
             "HuggingFace embeddings not installed. "
             "Run: pip install llama-index-embeddings-huggingface"
         ) from e
-    
+
     logger.info(f"Initializing HuggingFace embeddings with model: {settings.embedding_model}")
     return HuggingFaceEmbedding(model_name=settings.embedding_model)
 
@@ -91,12 +91,12 @@ def _create_openai_embedding(settings: "Settings") -> BaseEmbedding:
             "OpenAI embeddings not installed. "
             "Run: pip install llama-index-embeddings-openai"
         ) from e
-    
+
     if not settings.openai_api_key:
         raise LLMFactoryError(
             "OPENAI_API_KEY not set. Required when embedding_backend='openai'"
         )
-    
+
     logger.info(f"Initializing OpenAI embeddings with model: {settings.embedding_model}")
     return OpenAIEmbedding(
         model_name=settings.embedding_model,
@@ -108,15 +108,15 @@ def _create_openai_embedding(settings: "Settings") -> BaseEmbedding:
 def get_llm() -> LLM:
     """
     Get configured LLM instance based on settings.
-    
+
     Returns:
         LLM instance (OpenAI or Ollama)
-        
+
     Raises:
         LLMFactoryError: If configuration is invalid or dependencies missing
     """
     settings = get_settings()
-    
+
     match settings.llm_backend:
         case LLMBackend.OPENAI:
             return _create_openai_llm(settings)
@@ -130,15 +130,15 @@ def get_llm() -> LLM:
 def get_embedding_model() -> BaseEmbedding:
     """
     Get configured embedding model based on settings.
-    
+
     Returns:
         Embedding model instance (HuggingFace or OpenAI)
-        
+
     Raises:
         LLMFactoryError: If configuration is invalid or dependencies missing
     """
     settings = get_settings()
-    
+
     match settings.embedding_backend:
         case EmbeddingBackend.HUGGINGFACE:
             return _create_huggingface_embedding(settings)
@@ -153,17 +153,17 @@ def get_embedding_model() -> BaseEmbedding:
 def configure_llama_index() -> None:
     """
     Configure LlamaIndex global settings with our LLM and embedding model.
-    
+
     Call this at application startup to set default LLM/embeddings.
     """
     settings = get_settings()
-    
+
     logger.info("Configuring LlamaIndex global settings...")
-    
+
     try:
         LlamaSettings.llm = get_llm()
         LlamaSettings.embed_model = get_embedding_model()
-        
+
         logger.info(
             f"LlamaIndex configured: LLM={settings.llm_backend.value}, "
             f"Embeddings={settings.embedding_backend.value}"
