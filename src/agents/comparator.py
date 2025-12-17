@@ -10,8 +10,9 @@ The Comparator Agent finds potential conflicts between documents by:
 This is the "detection" half of the conflict detection pipeline.
 """
 
+from datetime import date
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
@@ -697,6 +698,3 @@ class ComparatorAgent:
         except ValueError:
             return None
 
-
-# Required import for uuid4
-from uuid import uuid4

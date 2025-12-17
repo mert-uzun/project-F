@@ -246,11 +246,9 @@ class UnstructuredClient:
     def _check_availability(self) -> bool:
         """Check if unstructured is installed."""
         if self._available is None:
-            try:
-                from unstructured.partition.pdf import partition_pdf
-                self._available = True
-            except ImportError:
-                self._available = False
+            import importlib.util
+
+            self._available = importlib.util.find_spec("unstructured") is not None
         return self._available
 
     async def parse(self, file_path: Path) -> ParsedDocument:
