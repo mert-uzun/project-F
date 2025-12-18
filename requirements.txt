@@ -1,10 +1,9 @@
 # ====================================
 # Cross-Document Conflict Detector MVP
-# PINNED versions to avoid pip resolver taking hours
+# PINNED versions - tested compatible
 # ====================================
 
 # === Core Framework ===
-# Use the metapackage which pulls compatible versions
 llama-index==0.10.68
 
 # === Document Parsing ===
@@ -18,9 +17,6 @@ chromadb==0.4.24
 networkx==3.3
 pyvis==0.3.2
 
-# === LLM Backends ===
-# These are included in llama-index metapackage
-
 # === API Layer ===
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
@@ -33,7 +29,7 @@ pydantic-settings==2.5.2
 # === Utilities ===
 python-dotenv==1.0.1
 rich==13.8.1
-tenacity==9.0.0
+tenacity==8.5.0
 
 # === Development ===
 pytest==8.3.3
