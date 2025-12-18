@@ -1,6 +1,6 @@
 # =============================================================================
 # Cross-Document Conflict Detector - CI/CD Pipeline
-# Lightweight CI: Linting only (no heavy ML dependencies)
+# Comprehensive CI with tests (optimized for speed)
 # =============================================================================
 
 name: CI
@@ -16,7 +16,7 @@ env:
 
 jobs:
   # ===========================================================================
-  # Linting and Code Quality (Fast - ~30 seconds)
+  # Linting and Code Quality
   # ===========================================================================
   lint:
     name: Lint & Format
@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install linting tools
+      - name: Install Ruff
         run: pip install ruff
 
       - name: Run Ruff linter
@@ -41,12 +41,12 @@ jobs:
         run: ruff format --check src/ app/ tests/ ui/
 
   # ===========================================================================
-  # Syntax & Import Check (No heavy deps - ~1 minute)
+  # Unit Tests
   # ===========================================================================
-  syntax:
-    name: Syntax Check
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     needs: lint
     steps:
       - name: Checkout code
@@ -56,25 +56,45 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: requirements-ci.txt
 
-      - name: Install minimal deps for syntax check
+      - name: Install CI dependencies
         run: |
-          pip install pydantic pydantic-settings python-dotenv
+          pip install --upgrade pip
+          pip install -r requirements-ci.txt
 
-      - name: Check Python syntax
+      - name: Run tests
         run: |
-          python -m py_compile app/config.py
-          python -m py_compile src/ingestion/schemas.py
-          python -m py_compile src/knowledge/schemas.py
-          python -m py_compile src/agents/schemas.py
+          pytest tests/ \
+            --cov=src --cov=app \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -v \
+            --ignore=tests/test_llm_factory.py \
+            --ignore=tests/test_pdf_parser.py \
+            --ignore=tests/test_agents.py \
+            -x
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          LLM_BACKEND: "ollama"
+          EMBEDDING_BACKEND: "huggingface"
+          SKIP_LLM_TESTS: "true"
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: success()
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
 
   # ===========================================================================
-  # Docker Build Test (Uses cache - ~2 minutes)
+  # Docker Build
   # ===========================================================================
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: lint
     steps:
       - name: Checkout code
