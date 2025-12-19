@@ -5,6 +5,7 @@ The Moat: Uses LlamaParse for premium table extraction with Unstructured fallbac
 Tables are converted to markdown format for LLM consumption.
 """
 
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -73,7 +74,7 @@ class LlamaParseClient:
             self._parser = LlamaParse(
                 api_key=self.api_key,
                 # Support EU region via env var
-                base_url=os.getenv("LLAMA_CLOUD_API_BASE_URL", "https://api.cloud.llamaindex.ai"),
+                base_url=os.getenv("LLAMA_CLOUD_API_BASE_URL", "https://api.cloud.eu.llamaindex.ai"),
                 result_type="markdown",
                 # Use system_prompt instead of deprecated parsing_instruction
                 system_prompt=(
@@ -81,9 +82,10 @@ class LlamaParseClient:
                     "Preserve column headers and row relationships. "
                     "For financial data, maintain number formatting."
                 ),
-                # Premium features for table extraction
-                use_vendor_multimodal_model=True,
-                vendor_multimodal_model_name="anthropic-sonnet-4-20250514",
+                # Premium features for table extraction (costs extra credits!)
+                # Uncomment if you have credits:
+                # use_vendor_multimodal_model=True,
+                # vendor_multimodal_model_name="anthropic-sonnet-4.0",
             )
 
         return self._parser
