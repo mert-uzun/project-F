@@ -72,8 +72,11 @@ class LlamaParseClient:
 
             self._parser = LlamaParse(
                 api_key=self.api_key,
+                # Support EU region via env var
+                base_url=os.getenv("LLAMA_CLOUD_API_BASE_URL", "https://api.cloud.llamaindex.ai"),
                 result_type="markdown",
-                parsing_instruction=(
+                # Use system_prompt instead of deprecated parsing_instruction
+                system_prompt=(
                     "Extract all tables with their full structure. "
                     "Preserve column headers and row relationships. "
                     "For financial data, maintain number formatting."
